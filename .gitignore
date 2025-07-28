@@ -1,0 +1,11 @@
+#python
+
+__pycache__/
+*.pyc
+
+#Virtual environment
+hopinnenv/
+
+#Enviornment variables
+.env
+
