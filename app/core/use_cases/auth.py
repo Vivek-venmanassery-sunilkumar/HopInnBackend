@@ -1,5 +1,6 @@
 from app.core.entities.user import User
 from app.core.repositories.traveller.user_repository import UserRepository
+from app.core.repositories.traveller.email_repo import EmailRepo
 from app.infrastructure.redis.redis_client import RedisClient
 from typing import Dict, Any
 import random
@@ -8,9 +9,15 @@ import string
 
 
 class AuthUseCases:
-    def __init__(self, user_repo: UserRepository, redis_client: RedisClient):
+    def __init__(
+            self, 
+            user_repo: UserRepository, 
+            redis_client: RedisClient,
+            email_repo: EmailRepo
+            ):
         self.user_repo = user_repo
         self.redis_client = redis_client
+        self.email_repo = email_repo
     
     async def initiate_signup(self, user_data: Dict[str, Any]) -> str:
         if await self.user_repo.get_user_by_email(user_data["email"]):
@@ -23,6 +30,7 @@ class AuthUseCases:
             user_data = user_data
         )
 
+        self.email_repo.send(user_data['email'], otp)
         print(f"otp for {user_data['email']}: {otp}")
         return otp
     

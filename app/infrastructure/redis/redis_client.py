@@ -6,10 +6,10 @@ from typing import Optional, Dict, Any
 class RedisClient:
     def __init__(self):
         self.client = redis.Redis(
-            host = redis_settings.REDIS_HOST,
-            port = redis_settings.REDIS_PORT,
-            db = redis_settings.REDIS_DB,
-            password = redis_settings.REDIS_PASSWORD or None,
+            host = redis_settings.HOST,
+            port = redis_settings.PORT,
+            db = redis_settings.DB,
+            password = redis_settings.PASSWORD or None,
             decode_responses= True,
             socket_connect_timeout = 5,
             )
