@@ -7,6 +7,7 @@ class RedisSettings(BaseSettings):
     PASSWORD: str | None = None
     OTP_EXPIRE_SECONDS: int = 300
     MAX_OTP_ATTEMPTS: int = 3
+    MAX_OTP_RETRY_ATTEMPTS: int = 3
 
     model_config = SettingsConfigDict(env_prefix = "REDIS_", env_file = ".env", extra= "ignore")
 

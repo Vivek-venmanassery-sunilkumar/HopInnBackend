@@ -1,26 +1,20 @@
-from phonenumbers import parse, format_number, PhoneNumberFormat, NumberParseException
-from pydantic import BaseModel, EmailStr, field_validator
-import re
+from pydantic import BaseModel
+from app.core.validations.types import StrictEmail
+from app.core.validations.decorators import password_validator, otp_validator
 
-class UserRegister(BaseModel):
-    full_name: str
-    phone_number: str
-    email: EmailStr
+class UserRegisterSchema(BaseModel):
+    fullName: str
+    phoneNumber: str
+    email: StrictEmail
     password: str
-
-
-    @field_validator("password")
-    def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError("Password too short")
-        if not re.search(r"\d", v):
-            raise ValueError("Password needs a number")
-        return v
     
-    @field_validator("phone_number")
-    def validate_phone(cls, v):
-        try:
-            parsed = parse(v, None)
-            return format_number(parsed, PhoneNumberFormat.E164)
-        except NumberParseException:
-            raise ValueError("Invalid phone number. Include country code (e.g., +1)")
+    _validate_password = password_validator("password")
+
+class OtpDataSchema(BaseModel):
+    email: StrictEmail
+    otp: str
+
+    _validate_otp = otp_validator("otp")
+
+class EmailSchema(BaseModel):
+    email: StrictEmail

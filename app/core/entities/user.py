@@ -4,19 +4,19 @@ from typing import Optional
 
 class User(BaseModel):
     id: Optional[str] = None
-    full_name: str
+    fullName: str
     email: str
-    phone_number: str
-    password_hash: str
-    profile_image: Optional[str] = None
-    google_id: Optional[str] = None
-    is_admin: bool = False
-    is_guide: bool = False
-    is_host: bool = False
-    is_traveller: bool = True
-    is_active: bool = True
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    phoneNumber: str
+    passwordHash: str
+    profileImage: Optional[str] = None
+    googleId: Optional[str] = None
+    isAdmin: bool = False
+    isGuide: bool = False
+    isHost: bool = False
+    isTraveller: bool = True
+    isActive: bool = True
+    createdAt: Optional[datetime] = None
+    updatedAt: Optional[datetime] = None
 
     class Config:
         from_attributes = True

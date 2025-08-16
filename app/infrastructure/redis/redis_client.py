@@ -1,11 +1,13 @@
 import json
-import redis
+from redis import asyncio as aioredis
 from app.config.redis import redis_settings
-from typing import Optional, Dict, Any
+
+import logging
+logger = logging.getLogger(__name__)
 
 class RedisClient:
     def __init__(self):
-        self.client = redis.Redis(
+        self.client = aioredis.Redis(
             host = redis_settings.HOST,
             port = redis_settings.PORT,
             db = redis_settings.DB,
@@ -19,34 +21,49 @@ class RedisClient:
         data = {
             "otp": otp,
             "user_data": user_data,
-            "attempts": 0
+            "attempts": 0,
+            "otp_retry_attempts": 0
         }
-        self.client.setex(
+        success = await self.client.setex(
             name=key,
             time=redis_settings.OTP_EXPIRE_SECONDS,
             value = json.dumps(data)
         )
-    
-    async def verify_otp_and_retrieve_data(self, email: str, otp: str)->Optional[Dict[str, Any]]:
+        logger.info(f"is the data saved: ", success)
+
+    async def get_signup_data(self, email: str)->dict | None:
         key = f"signup:{email}"
-        data = self.client.get(key)
+        value = await self.client.get(key)
+        if value is None:
+            logger.info("signup_data found for: %s",email)
+            return None
 
-        if not data:
-            return None
-        
-        parsed = json.loads(data)
+        if isinstance(value, bytes):
+            value_str = value.decode("utf-8")
+        else:
+            value_str = value
 
-        if parsed["attempts"] >= redis_settings.MAX_OTP_ATTEMPTS:
-            self.client.delete(key)
-            return None
+        logger.info(f"Signup data for {email}: {value_str}")
         
-        if parsed["otp"] != otp:
-            parsed["attempts"] += 1
-            self.client.setex(
-                name=key,
-                time=redis_settings.OTP_EXPIRE_SECONDS,
-                value = json.dumps(parsed)
-            )
-            return None
+        return json.loads(value) if value else None
+    
+    async def delete_signup_data(self, email: str)-> None:
+        key = f"signup:{email}"
         self.client.delete(key)
-        return parsed["user_data"]
+    
+    async def update_signup_data(self, email: str, **updates)-> None:
+        data = await self.get_signup_data(email)
+        if not data:
+            return
+
+        #preserve existing ttl for the redis data stored
+        key = f"signup:{email}"
+        ttl = await self.client.ttl(key)
+
+        if ttl <= 0:
+            return
+
+        data.update(updates)
+        self.client.setex(key, ttl, json.dumps(data))
+
+    
