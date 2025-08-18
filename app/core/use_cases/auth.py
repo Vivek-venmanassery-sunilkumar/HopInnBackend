@@ -9,7 +9,7 @@ import string
 
 
 
-class AuthUseCases:
+class SignUpUseCases:
     def __init__(
             self, 
             user_repo: UserRepository, 
@@ -41,9 +41,12 @@ class AuthUseCases:
         data = await self.redis_client.get_signup_data(email)
         if not data:
             raise ValueError("You took too long hence expired")    
-        
+        if data['attempts'] == 3:
+            raise ValueError("Max attempt reached! Validate with a new otp after countdown.")
         if data["otp"] != otp:
             attempts = data['attempts'] + 1
+            if attempts == 3:
+                raise ValueError("Invalid OTP.Max attempt reached! Validate with a new otp after countdown.")
             await self.redis_client.update_signup_data(email = email, attempts = attempts)
             raise ValueError("Invalid OTP")
 
@@ -63,8 +66,10 @@ class AuthUseCases:
       #keeping the ttl same, increase the retry_attempts as necessary to complete the requirement for the retry otp endpoint.        
         new_otp = self.generate_otp()
         await self.redis_client.update_signup_data(
+            email=email,
             otp= new_otp,
-            otp_retry_attempts = data['otp_retry_attempts'] + 1
+            otp_retry_attempts = data['otp_retry_attempts'] + 1,
+            attempts = 0
         )
         return new_otp
         

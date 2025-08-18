@@ -64,6 +64,6 @@ class RedisClient:
             return
 
         data.update(updates)
-        self.client.setex(key, ttl, json.dumps(data))
+        await self.client.setex(key, ttl, json.dumps(data))
 
-    
+ 
