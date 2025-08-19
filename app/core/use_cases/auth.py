@@ -1,13 +1,12 @@
 from app.core.entities.user import User
 from app.core.repositories.traveller.user_repository import UserRepository
+from app.core.repositories.token.token_repository import TokenRepository
 from app.core.repositories.traveller.email_repo import EmailRepo
 from app.infrastructure.redis.redis_client import RedisClient
-from app.api.schemas.Traveller.authentication import UserRegisterSchema
+from app.api.schemas.Traveller.authentication import UserRegisterSchema, SafeUserResponse
 from typing import Dict, Any
 import random
 import string
-
-
 
 class SignUpUseCases:
     def __init__(
@@ -74,3 +73,43 @@ class SignUpUseCases:
         return new_otp
         
 
+class LoginUseCases:
+    def __init__(
+            self,
+            user_repo: UserRepository,
+            token_repo: TokenRepository,
+    ):
+        self.user_repo = user_repo
+        self.token_repo = token_repo
+    
+    async def execute(self, email: str, password: str)->tuple:
+        user = await self._validate_user(email)
+        await self._validate_password(password, user.password_hash)
+        user_response = SafeUserResponse(
+            id=user.id,
+            isAdmin=user.is_admin,
+            isGuide=user.is_guide,
+            isHost = user.is_host,
+            isTraveller=user.is_traveller,
+            isActive = user.is_active,
+        )
+        tokens = self._generate_tokens(user.id)
+        return user_response, tokens 
+    async def _validate_user(self, email: str)->User:
+        user = await self.user_repo.get_user_by_email(email)
+        if not user:
+            raise ValueError("User not found")
+        return user
+    
+    async def _validate_password(self, password: str, hashed_password: str)->bool:
+        validated = await self.user_repo.verify_password(password, hashed_password)
+        if not validated:
+            raise ValueError("You entered the wrong password")
+    
+
+    def _generate_tokens(self,user_id: str)->dict:
+        access_token = self.token_repo.generate_access_token(user_id)
+        refresh_token = self.token_repo.generate_refresh_token(user_id)
+        return {'access_token': access_token, 'refresh_token': refresh_token}
+
+        

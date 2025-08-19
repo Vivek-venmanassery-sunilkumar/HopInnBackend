@@ -1,7 +1,7 @@
-from app.api.schemas.Traveller.authentication import UserRegisterSchema, OtpDataSchema, EmailSchema
-from app.api.dependencies import UserRepoDep, EmailRepoDep, RedisRepoDep
-from fastapi import APIRouter, HTTPException, status
-from app.core.use_cases.auth import SignUpUseCases
+from app.api.schemas.Traveller.authentication import UserRegisterSchema, OtpDataSchema, EmailSchema, LoginSchema
+from app.api.dependencies import UserRepoDep, EmailRepoDep, RedisRepoDep, TokenRepoDep
+from fastapi import APIRouter, HTTPException, status, Response
+from app.core.use_cases.auth import SignUpUseCases, LoginUseCases
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -105,3 +105,44 @@ async def retry_otp_send(
             }
         )
 
+
+@router.post('/login', status_code= status.HTTP_200_OK)
+async def login(
+    login_data: LoginSchema,
+    user_repo: UserRepoDep,
+    token_repo: TokenRepoDep,
+    response: Response
+):
+    login_uc = LoginUseCases(user_repo, token_repo)
+
+    try:
+        user_response, tokens = await login_uc.execute(login_data.email, login_data.password)
+        
+        response.set_cookie(
+            key="access_token",
+            value = tokens["access_token"],
+            httponly= True,
+            secure = False,
+            max_age = 15*60,
+            samesite="strict",
+            path='/'
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value = tokens["refresh_token"],
+            httponly=True,
+            secure = False,
+            max_age = 30*24*60*60,
+            samesite='strict',
+            path='/'
+        )
+
+        return {
+            "user": user_response.model_dump(),
+            "message": "Login successful"
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail = str(e)
+        )

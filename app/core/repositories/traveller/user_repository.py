@@ -11,3 +11,7 @@ class UserRepository(ABC):
     @abstractmethod
     async def get_user_by_email(self, email: str)-> User | None:
         pass
+
+    @abstractmethod
+    async def verify_password(self, password: str, hashed_password: str)->bool:
+        pass

@@ -53,10 +53,20 @@ class SQLAlchemyUserRepository(UserRepository):
         
         return User(
             id=str(db_user.id),
-            fullName = db_user.full_name,
+            full_name = db_user.full_name,
             email = db_user.email,
-            phoneNumber = db_user.phone_number,
-            passwordHash = db_user.password_hash,
-            isTraveller = db_user.is_traveller
+            phone_number = db_user.phone_number,
+            password_hash = db_user.password_hash,
+            profile_image = db_user.profile_image,
+            google_id = db_user.google_id,
+            is_traveller = db_user.is_traveller,
+            is_guide=db_user.is_guide,
+            is_active = db_user.is_active,
+            is_admin = db_user.is_admin,
+            created_at = db_user.created_at,
+            updated_at = db_user.updated_at
         )
+    
+    async def verify_password(self, password, hashed_password):
+        return pwd_context.verify(password, hashed_password)
         
