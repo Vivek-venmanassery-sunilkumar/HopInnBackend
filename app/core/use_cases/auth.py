@@ -1,4 +1,5 @@
 from app.core.entities.user import User
+from app.api.schemas.roles.roles import UserRoles
 from app.core.repositories.traveller.user_repository import UserRepository
 from app.core.repositories.token.token_repository import TokenRepository
 from app.core.repositories.traveller.email_repo import EmailRepo
@@ -113,3 +114,13 @@ class LoginUseCases:
         return {'access_token': access_token, 'refresh_token': refresh_token}
 
         
+
+class RolesUseCase:
+    def __init__(
+            self,
+            user_repo: UserRepository
+    ):
+        self.user_repo = user_repo
+
+    def get_roles(self, user_id:str)->UserRoles:
+        return self.user_repo.get_user_roles(user_id)

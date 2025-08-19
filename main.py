@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routers.Traveller.authentication import router as auth_router
+from app.api.routers.roles.roles import router as role_router
 from app.api.middlewares.jwt_middleware import JWTMiddleware
 from app.api.dependencies import get_token_repository, get_redis_client
 from app.infrastructure.config.jwt_settings_adaptor import get_core_jwt_settings
@@ -46,4 +47,4 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
-
+app.include_router(role_router)

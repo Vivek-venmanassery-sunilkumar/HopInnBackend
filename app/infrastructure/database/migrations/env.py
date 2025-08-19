@@ -3,13 +3,12 @@ from sqlalchemy import pool, create_engine
 from app.config.database import db_settings
 from alembic import context
 from app.infrastructure.database.session import Base
-from app.infrastructure.database.models.users.user import User
 
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-DATABASE_URL = db_settings.DATABASE_URL
+DATABASE_URL = db_settings.URL
 if DATABASE_URL:
     sync_database_url = DATABASE_URL.replace("postgresql+asyncpg", "postgresql+psycopg2")
     config.set_main_option("sqlalchemy.url", sync_database_url)
@@ -65,7 +64,7 @@ def run_migrations_online() -> None:
     connectable = create_engine(
         config.get_main_option("sqlalchemy.url"),
         poolclass = pool.NullPool,
-        echo = db_settings.DB_ECHO_LOG,
+        echo = db_settings.ECHO_LOG,
     )
 
     with connectable.connect() as connection:

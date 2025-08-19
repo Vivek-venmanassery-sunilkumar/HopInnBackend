@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from passlib.context import CryptContext
 from app.api.schemas.Traveller.authentication import UserRegisterSchema
+from app.api.schemas.roles.roles import UserRoles
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import logging
 
@@ -61,6 +62,7 @@ class SQLAlchemyUserRepository(UserRepository):
             google_id = db_user.google_id,
             is_traveller = db_user.is_traveller,
             is_guide=db_user.is_guide,
+            is_host = db_user.is_host,
             is_active = db_user.is_active,
             is_admin = db_user.is_admin,
             created_at = db_user.created_at,
@@ -69,4 +71,21 @@ class SQLAlchemyUserRepository(UserRepository):
     
     async def verify_password(self, password, hashed_password):
         return pwd_context.verify(password, hashed_password)
+
+    async def get_user_roles(self, user_id: str)->UserRoles:
+        db_user = await self.session.scalar(
+            select(UserModel).where(UserModel.id == int(user_id))
+        ) 
+
+        if not db_user:
+            return None
         
+        return UserRoles(
+            id=str(db_user.id),
+            isTraveller=db_user.is_traveller,
+            isGuide=db_user.is_guide,
+            isHost = db_user.is_host,
+            isAdmin=db_user.is_admin,
+            isActive=db_user.is_active
+        )
+

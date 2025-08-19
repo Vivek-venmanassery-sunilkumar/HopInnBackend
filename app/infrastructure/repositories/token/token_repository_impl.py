@@ -21,10 +21,9 @@ class TokenRepositoryImpl(TokenRepository):
             key = self.jwt_settings.SECRET_KEY,
             algorithm = self.jwt_settings.ALGORITHM
         )
-
         return access_token
 
-    async def generate_refresh_token(self,user_id: str)->str:
+    def generate_refresh_token(self,user_id: str)->str:
         refresh_token = jwt.encode(
             claims={
                 'user_id': user_id,

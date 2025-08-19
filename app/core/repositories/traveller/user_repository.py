@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from app.core.entities.user import User
 from app.api.schemas.Traveller.authentication import UserRegisterSchema
+from app.api.schemas.roles.roles import UserRoles
 
 
 class UserRepository(ABC):
@@ -14,4 +15,8 @@ class UserRepository(ABC):
 
     @abstractmethod
     async def verify_password(self, password: str, hashed_password: str)->bool:
+        pass
+
+    @abstractmethod
+    async def get_user_roles(self, user_id: str)->UserRoles:
         pass
