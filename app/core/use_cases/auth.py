@@ -2,7 +2,7 @@ from app.core.entities.user import User
 from app.core.repositories.traveller.user_repository import UserRepository
 from app.core.repositories.token.token_repository import TokenRepository
 from app.core.repositories.traveller.email_repo import EmailRepo
-from app.infrastructure.redis.redis_client import RedisClient
+from app.core.redis.redis_repo import RedisRepoInterface
 from app.api.schemas.Traveller.authentication import UserRegisterSchema, SafeUserResponse
 from typing import Dict, Any
 import random
@@ -12,7 +12,7 @@ class SignUpUseCases:
     def __init__(
             self, 
             user_repo: UserRepository, 
-            redis_client: RedisClient,
+            redis_client: RedisRepoInterface,
             email_repo: EmailRepo
             ):
         self.user_repo = user_repo

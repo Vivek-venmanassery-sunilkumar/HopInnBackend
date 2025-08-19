@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import secrets
 
-
+#main settings for the jwt from the enviornment file
 
 class JWTSettings(BaseSettings):
     SECRET_KEY: str = secrets.token_hex(32)
