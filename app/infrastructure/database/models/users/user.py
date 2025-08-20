@@ -18,6 +18,7 @@ class User(Base):
     is_active = Column(Boolean, default = True)
     created_at = Column(DateTime, server_default = func.now())
     updated_at = Column(DateTime, server_default = func.now(), onupdate=func.now())
+    is_host = Column(Boolean, default=False)
 
     def __repr__(self):
         return f"<User {self.email}>"

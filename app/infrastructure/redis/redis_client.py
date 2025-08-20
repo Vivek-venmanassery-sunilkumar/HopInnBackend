@@ -1,17 +1,18 @@
 import json
 from redis import asyncio as aioredis
-from app.config.redis import redis_settings
-
+from app.core.entities.redis_settings import RedisSettings
+from app.core.redis.redis_repo import RedisRepoInterface
 import logging
 logger = logging.getLogger(__name__)
 
-class RedisClient:
-    def __init__(self):
+class RedisClient(RedisRepoInterface):
+    def __init__(self, redis_settings: RedisSettings):
+        self.redis_settings = redis_settings
         self.client = aioredis.Redis(
-            host = redis_settings.HOST,
-            port = redis_settings.PORT,
-            db = redis_settings.DB,
-            password = redis_settings.PASSWORD or None,
+            host = self.redis_settings.HOST,
+            port = self.redis_settings.PORT,
+            db = self.redis_settings.DB,
+            password = self.redis_settings.PASSWORD or None,
             decode_responses= True,
             socket_connect_timeout = 5,
             )
@@ -26,7 +27,7 @@ class RedisClient:
         }
         success = await self.client.setex(
             name=key,
-            time=redis_settings.OTP_EXPIRE_SECONDS,
+            time=self.redis_settings.OTP_EXPIRE_SECONDS,
             value = json.dumps(data)
         )
         logger.info(f"is the data saved: ", success)
@@ -64,6 +65,16 @@ class RedisClient:
             return
 
         data.update(updates)
-        self.client.setex(key, ttl, json.dumps(data))
+        await self.client.setex(key, ttl, json.dumps(data))
 
+
+    #token redis implementations
+    async def is_token_blacklisted(self, token: str)->bool:
+        key=f"blacklist:{token}"
+        return await self.client.exists(key) > 0
     
+    async def store_blacklisted_token(self, token:str, expiry:int)->None:
+        key = f"blacklist{token}"
+        await self.client.setex(key, expiry, '1')
+
+ 

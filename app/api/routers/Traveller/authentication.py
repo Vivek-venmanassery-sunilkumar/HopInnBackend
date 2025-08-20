@@ -1,7 +1,7 @@
-from app.api.schemas.Traveller.authentication import UserRegisterSchema, OtpDataSchema, EmailSchema
-from app.api.dependencies import UserRepoDep, EmailRepoDep, RedisRepoDep
-from fastapi import APIRouter, HTTPException, status
-from app.core.use_cases.auth import AuthUseCases
+from app.api.schemas.Traveller.authentication import UserRegisterSchema, OtpDataSchema, EmailSchema, LoginSchema
+from app.api.dependencies import UserRepoDep, EmailRepoDep, RedisRepoDep, TokenRepoDep
+from fastapi import APIRouter, HTTPException, status, Response
+from app.core.use_cases.auth import SignUpUseCases, LoginUseCases
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -13,7 +13,7 @@ async def initiate_signup(
     email_repo: EmailRepoDep
 ):
 
-    auth_uc = AuthUseCases(user_repo, redis_client, email_repo)
+    auth_uc = SignUpUseCases(user_repo, redis_client, email_repo)
     try:
         otp, email = await auth_uc.initiate_signup(user_data.model_dump())
         auth_uc.send_email(email=email, otp=otp)
@@ -43,7 +43,7 @@ async def otp_verify(
     redis_client: RedisRepoDep,
     email_repo: EmailRepoDep
 ):
-    auth_uc = AuthUseCases(user_repo, redis_client, email_repo)
+    auth_uc = SignUpUseCases(user_repo, redis_client, email_repo)
     try:
         data = await auth_uc.verify_otp(email=otp_data.email, otp = otp_data.otp)
         success = await auth_uc.create_user(UserRegisterSchema(**data))
@@ -76,7 +76,7 @@ async def retry_otp_send(
         redis_client: RedisRepoDep,
         email_repo: EmailRepoDep
         ):
-    auth_uc = AuthUseCases(user_repo, redis_client, email_repo)
+    auth_uc = SignUpUseCases(user_repo, redis_client, email_repo)
     try:
         new_otp = await auth_uc.retry_otp(email_data.email)
         auth_uc.send_email(email=email_data.email, otp = new_otp)
@@ -105,3 +105,44 @@ async def retry_otp_send(
             }
         )
 
+
+@router.post('/login', status_code= status.HTTP_200_OK)
+async def login(
+    login_data: LoginSchema,
+    user_repo: UserRepoDep,
+    token_repo: TokenRepoDep,
+    response: Response
+):
+    login_uc = LoginUseCases(user_repo, token_repo)
+
+    try:
+        user_response, tokens = await login_uc.execute(login_data.email, login_data.password)
+        
+        response.set_cookie(
+            key="access_token",
+            value = tokens["access_token"],
+            httponly= True,
+            secure = False,
+            max_age = 15*60,
+            samesite="strict",
+            path='/'
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value = tokens["refresh_token"],
+            httponly=True,
+            secure = False,
+            max_age = 30*24*60*60,
+            samesite='strict',
+            path='/'
+        )
+
+        return {
+            "user": user_response.model_dump(),
+            "message": "Login successful"
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail = str(e)
+        )
