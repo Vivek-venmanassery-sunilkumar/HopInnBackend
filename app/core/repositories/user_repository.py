@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from app.core.entities.user import User
-from app.api.schemas.Traveller.authentication import UserRegisterSchema
-from app.api.schemas.roles.roles import UserRoles
-
+from app.api.schemas import UserRoles,UserRegisterSchema
 
 class UserRepository(ABC):
     @abstractmethod

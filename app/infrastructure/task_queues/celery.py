@@ -1,6 +1,6 @@
 from celery import Celery
 from app.config.redis import redis_settings
-from app.infrastructure.repositories.traveller.smtp_email import SMTPEmail
+from app.infrastructure.repositories import SMTPEmail
 
 celery = Celery(
     'tasks',

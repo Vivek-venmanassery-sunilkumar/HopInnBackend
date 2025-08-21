@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from app.core.validations.types import StrictEmail
 from app.core.validations.decorators import password_validator, otp_validator
-from typing import Optional
 
 class UserRegisterSchema(BaseModel):
     fullName: str

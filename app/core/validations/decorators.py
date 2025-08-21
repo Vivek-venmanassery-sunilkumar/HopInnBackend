@@ -2,6 +2,8 @@ from pydantic import field_validator
 from app.core.constants.validation_patterns import PASSWORD_PATTERN
 
 
+#field validators in schema
+
 def password_validator(field_name="password"):
     @field_validator(field_name)
     def __validate_password(cls, v):
@@ -17,3 +19,4 @@ def otp_validator(field_name="otp"):
             raise ValueError("Otp should be 6 digits")
         return v
     return __validate_otp
+

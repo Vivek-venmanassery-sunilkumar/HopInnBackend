@@ -1,5 +1,5 @@
-from .traveller.user_repository import UserRepository
-from .traveller.email_repo import EmailRepo
-from .token.token_repository import TokenRepository
-
-__all__ = ["UserRepository","EmailRepo", "TokenRepository"]
+from .user_repository import UserRepository
+from .email_repo import EmailRepo
+from .traveller_profile import TravellerProfileInterface
+from .token_repository import TokenRepository
+from .user_permissions_roles import UserRolesPermissionsInterface

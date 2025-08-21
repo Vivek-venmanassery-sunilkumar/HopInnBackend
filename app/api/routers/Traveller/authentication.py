@@ -1,7 +1,7 @@
-from app.api.schemas.Traveller.authentication import UserRegisterSchema, OtpDataSchema, EmailSchema, LoginSchema
+from app.api.schemas import OtpDataSchema, EmailSchema, LoginSchema, UserRegisterSchema
 from app.api.dependencies import UserRepoDep, EmailRepoDep, RedisRepoDep, TokenRepoDep
 from fastapi import APIRouter, HTTPException, status, Response
-from app.core.use_cases.auth import SignUpUseCases, LoginUseCases
+from app.core.use_cases import SignUpUseCases, LoginUseCases
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -124,7 +124,7 @@ async def login(
             httponly= True,
             secure = False,
             max_age = 15*60,
-            samesite="strict",
+            samesite="lax",
             path='/'
         )
         response.set_cookie(
@@ -133,7 +133,7 @@ async def login(
             httponly=True,
             secure = False,
             max_age = 30*24*60*60,
-            samesite='strict',
+            samesite='lax',
             path='/'
         )
 

@@ -3,7 +3,7 @@ from typing import Optional, Callable
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from app.core.redis.redis_repo import RedisRepoInterface
-from app.core.repositories.token.token_repository import TokenRepository
+from app.core.repositories import TokenRepository
 
 
 class JWTMiddleware(BaseHTTPMiddleware):

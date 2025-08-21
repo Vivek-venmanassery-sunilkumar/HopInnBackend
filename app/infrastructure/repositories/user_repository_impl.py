@@ -1,11 +1,10 @@
 from app.core.entities.user import User
-from app.core.repositories.traveller.user_repository import UserRepository
+from app.core.repositories import UserRepository
 from app.infrastructure.database.models.users.user import User as UserModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from passlib.context import CryptContext
-from app.api.schemas.Traveller.authentication import UserRegisterSchema
-from app.api.schemas.roles.roles import UserRoles
+from app.api.schemas import UserRegisterSchema, UserRoles
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import logging
 

@@ -1,10 +1,7 @@
 from app.core.entities.user import User
-from app.api.schemas.roles.roles import UserRoles
-from app.core.repositories.traveller.user_repository import UserRepository
-from app.core.repositories.token.token_repository import TokenRepository
-from app.core.repositories.traveller.email_repo import EmailRepo
+from app.api.schemas import UserRoles,UserRegisterSchema, SafeUserResponse
+from app.core.repositories import UserRepository, TokenRepository, EmailRepo
 from app.core.redis.redis_repo import RedisRepoInterface
-from app.api.schemas.Traveller.authentication import UserRegisterSchema, SafeUserResponse
 from typing import Dict, Any
 import random
 import string

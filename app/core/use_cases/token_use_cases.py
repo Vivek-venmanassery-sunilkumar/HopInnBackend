@@ -1,5 +1,5 @@
-from core.repositories.token.token_repository import TokenRepository
-from core.redis.redis_repo import RedisRepoInterface
+from app.core.repositories import TokenRepository
+from app.core.redis.redis_repo import RedisRepoInterface
 from typing import Optional
 
 class TokenUseCases:

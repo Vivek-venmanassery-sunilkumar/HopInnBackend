@@ -1,4 +1,4 @@
-from app.core.repositories.token.token_repository import TokenRepository
+from app.core.repositories import TokenRepository
 from app.core.entities.jwt_settings import JWTSettings
 from jose import jwt, JWTError
 from datetime import datetime

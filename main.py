@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routers.Traveller.authentication import router as auth_router
-from app.api.routers.roles.roles import router as role_router
+from app.api.routers import auth_router, profile_router, role_router
 from app.api.middlewares.jwt_middleware import JWTMiddleware
 from app.api.dependencies import get_token_repository, get_redis_client
 from app.infrastructure.config.jwt_settings_adaptor import get_core_jwt_settings
@@ -43,8 +42,9 @@ app.add_middleware(
     JWTMiddleware,
     token_repo = token_repo,
     redis_repo= redis_repo,
-    exempt_paths=['/auth','/docs']
+    exempt_paths=['/auth','/docs', '/openapi.json']
 )
 
 app.include_router(auth_router)
 app.include_router(role_router)
+app.include_router(profile_router)
