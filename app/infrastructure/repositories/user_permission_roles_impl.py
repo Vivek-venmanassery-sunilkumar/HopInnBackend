@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.infrastructure.database.models.users.user import User as UserModel
 
+#Implementation that helps the route protection in the backend therefore entitiy is returned 
+
 class UserRolesPermissionsImpl(UserRolesPermissionsInterface):
     def __init__(
             self,
@@ -13,7 +15,7 @@ class UserRolesPermissionsImpl(UserRolesPermissionsInterface):
     
     async def get_user_roles_and_permissions(self, user_id: str)->UserRolesAndPermissions:
         user_data = await self.session.scalar(
-            select(UserModel).where(user_id = int(user_id))
+            select(UserModel).where(UserModel.id == int(user_id))
         )
 
         return UserRolesAndPermissions(

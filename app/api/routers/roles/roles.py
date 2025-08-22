@@ -4,10 +4,7 @@ from app.api.dependencies import UserRepoDep
 
 router = APIRouter(prefix='/roles', tags=['roles'])
 
-
-#This route is gonna determine the route protections for the user in the frontend so we have to update it accordingly when needed.
-#when the new roles are created and used.
-
+#Route to identify roles/permissions for the frontend - UserRoles schema is returned(formatted for frontend)
 @router.get('/', status_code=status.HTTP_200_OK)
 async def get_roles(
     request: Request,

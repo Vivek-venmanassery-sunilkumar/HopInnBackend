@@ -14,7 +14,7 @@ class ProfileUseCase:
         profile_details = await self.traveller_profile.get(user_id)
         logger.info(f"njn profilil und: {profile_details}")
         if not profile_details:
-            return ValueError('no profile details available for the given user id')
+            raise ValueError('no profile details available for the given user id')
         return profile_details        
 
         
