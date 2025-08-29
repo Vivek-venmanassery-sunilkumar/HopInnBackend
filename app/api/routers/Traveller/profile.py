@@ -1,8 +1,9 @@
 from fastapi import APIRouter, status, HTTPException, Depends
 from starlette.requests import Request
 from app.api.dependencies import TravellerProfileDep
-from app.core.use_cases import TravellerProfileUseCase
+from app.core.use_cases import TravellerProfileUseCase, CloudinaryUseCase
 from app.core.route_protection_validations.route_protection_dependencies import verify_traveller
+from app.api.schemas import TravellerProfileSchema
 
 router = APIRouter(prefix='/profile',tags=['profile'])
 
@@ -23,4 +24,23 @@ async def get_profile_details(
         )
 
 
-
+@router.put('/update', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_traveller)])
+async def update_profile_detials(
+    request: Request,
+    update_data: TravellerProfileSchema,
+    traveller_profile: TravellerProfileDep
+):
+    profile_uc = TravellerProfileUseCase(traveller_profile=traveller_profile)
+    try: 
+        if update_data.profileImageUrl:
+            public_id = await profile_uc.get_public_id(user_id = request.state.user_id)
+            if public_id:
+                CloudinaryUseCase.delete_profile_image(public_id)
+        await profile_uc.update_profile_details(user_id = request.state.user_id, update_details=update_data)
+        del update_data.profileImagePublicId
+        return update_data
+    except Exception as e:
+        raise HTTPException(
+            status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail= str(e)
+        )

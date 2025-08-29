@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
-from app.core.entities.user import User
-from app.api.schemas import UserRoles,UserRegisterSchema
+from app.core.entities import UserEntity,AdminCreationEntity
+from app.api.schemas import UserRolesSchema,UserRegisterSchema
 
 class UserRepository(ABC):
     @abstractmethod
-    async def create_user(self, user: UserRegisterSchema) -> User:
+    async def create_user(self, user: UserRegisterSchema) -> UserEntity:
         pass
 
     @abstractmethod
-    async def get_user_by_email(self, email: str)-> User | None:
+    async def get_user_by_email(self, email: str)-> UserEntity | None:
         pass
 
     @abstractmethod
@@ -16,5 +16,15 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_user_roles(self, user_id: str)->UserRoles:
+    async def get_user_roles(self, user_id: str)->UserRolesSchema:
+        pass
+    
+
+    @abstractmethod
+    async def create_admin_user(self, admin_data: AdminCreationEntity)->bool:
+        pass
+
+
+    @abstractmethod
+    async def does_user_exist(self, email: str)->bool:
         pass

@@ -3,7 +3,8 @@ from app.core.validations.types import StrictEmail
 from app.core.validations.decorators import password_validator, otp_validator
 
 class UserRegisterSchema(BaseModel):
-    fullName: str
+    firstName: str
+    lastName: str
     phoneNumber: str
     email: StrictEmail
     password: str
@@ -25,7 +26,7 @@ class LoginSchema(BaseModel):
 
     _validate_password = password_validator("password")
 
-class SafeUserResponse(BaseModel):
+class SafeUserResponseSchema(BaseModel):
     id: str
     isAdmin: bool
     isGuide: bool

@@ -4,7 +4,9 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from app.core.redis.redis_repo import RedisRepoInterface
 from app.core.repositories import TokenRepository
+import logging
 
+logger = logging.getLogger(__name__)
 
 class JWTMiddleware(BaseHTTPMiddleware):
     def __init__(
@@ -40,6 +42,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
             return payload['user_id']
     
     async def dispatch(self, request: Request, call_next: Callable):
+        logger.info('I am inside the dispatch in jwtmiddleware')
         #skip middleware for exempt paths
         if self.is_exempt_path(request.url.path):
             return await call_next(request)

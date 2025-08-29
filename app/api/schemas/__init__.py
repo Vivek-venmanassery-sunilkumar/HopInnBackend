@@ -1,4 +1,4 @@
-from .Traveller.authentication import UserRegisterSchema, OtpDataSchema, EmailSchema, LoginSchema, SafeUserResponse
-from .Traveller.profile import TravellerProfile
-from .roles.roles import UserRoles
-from .cloudinary_schema import CloudData
+from .Traveller.authentication import UserRegisterSchema, OtpDataSchema, EmailSchema, LoginSchema, SafeUserResponseSchema
+from .Traveller.profile import TravellerProfileSchema
+from .roles.roles import UserRolesSchema
+from .cloudinary_schema import CloudDataSchema

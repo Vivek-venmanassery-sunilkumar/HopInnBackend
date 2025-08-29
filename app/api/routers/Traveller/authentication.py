@@ -144,5 +144,8 @@ async def login(
     except ValueError as e:
         raise HTTPException(
             status_code = status.HTTP_401_UNAUTHORIZED,
-            detail = str(e)
+            detail = {
+                'status':'error',
+                'message': str(e)
+            }
         )

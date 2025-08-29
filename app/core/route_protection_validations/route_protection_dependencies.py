@@ -10,6 +10,7 @@ async def verify_traveller(
         user_roles_permissions_repo: UserRolesPermissionsInterface = Depends(get_user_roles_permissions)
 ):
     user_id = getattr(request.state, 'user_id', None)
+    logger.info(f'user_id: {user_id}')
 
     if not user_id:
         raise HTTPException(

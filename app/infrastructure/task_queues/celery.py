@@ -12,5 +12,3 @@ celery = Celery(
 def send_otp_email(email: str, otp: str):
     email_repo = SMTPEmail()
     email_repo.send(email, otp)
-    
-

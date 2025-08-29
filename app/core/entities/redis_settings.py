@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class RedisSettings:
+class RedisSettingsEntity:
     HOST: str
     PORT: int
     DB: int

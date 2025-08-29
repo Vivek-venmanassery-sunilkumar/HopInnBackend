@@ -12,6 +12,7 @@ class CloudinarySettings(BaseSettings):
 cloud_settings = CloudinarySettings()
 
 
+#Instead of passing credentials to every Cloudinary method call, we set them once globally using this cloudinary.config method
 cloud_config = cloudinary.config(
     cloud_name = cloud_settings.NAME,
     api_key = cloud_settings.API_KEY,

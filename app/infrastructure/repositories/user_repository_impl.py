@@ -1,10 +1,10 @@
-from app.core.entities.user import User
+from app.core.entities import UserEntity, AdminCreationEntity
 from app.core.repositories import UserRepository
 from app.infrastructure.database.models.users.user import User as UserModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from passlib.context import CryptContext
-from app.api.schemas import UserRegisterSchema, UserRoles
+from app.api.schemas import UserRegisterSchema, UserRolesSchema
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import logging
 
@@ -16,12 +16,16 @@ class SQLAlchemyUserRepository(UserRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
     
+    def __hash_password(self, password: str):
+        return pwd_context.hash(password)
+
     async def create_user(self, user_data: UserRegisterSchema) -> bool:
-        hashed_password = pwd_context.hash(user_data.password)
+        hashed_password = self.__hash_password(user_data.password)
 
         try:
             db_user = UserModel(
-                full_name = user_data.fullName,
+                first_name = user_data.firstName,
+                last_name = user_data.lastName,
                 email = user_data.email,
                 phone_number = user_data.phoneNumber,
                 password_hash = hashed_password,
@@ -42,7 +46,7 @@ class SQLAlchemyUserRepository(UserRepository):
             log.exception("Database error occured while creating user")
             return False
     
-    async def get_user_by_email(self, email: str)-> User | None:
+    async def get_user_by_email(self, email: str)-> UserEntity | None:
         result = await self.session.execute(
             select(UserModel).where(UserModel.email == email)
         )
@@ -51,9 +55,10 @@ class SQLAlchemyUserRepository(UserRepository):
         if not db_user:
             return None
         
-        return User(
+        return UserEntity(
             id=str(db_user.id),
-            full_name = db_user.full_name,
+            first_name = db_user.first_name,
+            last_name = db_user.last_name,
             email = db_user.email,
             phone_number = db_user.phone_number,
             password_hash = db_user.password_hash,
@@ -71,7 +76,7 @@ class SQLAlchemyUserRepository(UserRepository):
     async def verify_password(self, password, hashed_password):
         return pwd_context.verify(password, hashed_password)
 
-    async def get_user_roles(self, user_id: str)->UserRoles:
+    async def get_user_roles(self, user_id: str)->UserRolesSchema:
         db_user = await self.session.scalar(
             select(UserModel).where(UserModel.id == int(user_id))
         ) 
@@ -79,12 +84,43 @@ class SQLAlchemyUserRepository(UserRepository):
         if not db_user:
             return None
         
-        return UserRoles(
+        return UserRolesSchema(
             id=str(db_user.id),
             isTraveller=db_user.is_traveller,
             isGuide=db_user.is_guide,
             isHost = db_user.is_host,
             isAdmin=db_user.is_admin,
-            isActive=db_user.is_active
+            isActive=db_user.is_active,
+        )
+    
+    async def create_admin_user(self, admin_data: AdminCreationEntity)->bool:
+        hashed_password = self.__hash_password(admin_data.password)
+
+        try:
+            db_admin_user = UserModel(
+                first_name = admin_data.first_name,
+                last_name = admin_data.last_name,
+                email = admin_data.email,
+                password_hash = hashed_password,
+                is_admin = True
+            )
+
+            self.session.add(db_admin_user)
+            await self.session.commit()
+            await self.session.refresh(db_admin_user)
+            return True
+        except IntegrityError as e:
+            await self.session.rollback() 
+            log.warning('This admin user already exists')
+            return False
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            log.warning(f"Some database error occured while creating admin user")
+            return False
+        
+    async def does_user_exist(self, email:str)->bool:
+        result = await self.session.scalar(
+            select(UserModel).where(UserModel.email == email)
         )
 
+        return result is not None

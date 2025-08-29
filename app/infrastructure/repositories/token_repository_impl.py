@@ -1,5 +1,5 @@
 from app.core.repositories import TokenRepository
-from app.core.entities.jwt_settings import JWTSettings
+from app.core.entities import JWTSettingsEntity
 from jose import jwt, JWTError
 from datetime import datetime
 from app.core.redis.redis_repo import RedisRepoInterface
@@ -7,7 +7,7 @@ from typing import Optional
 
 
 class TokenRepositoryImpl(TokenRepository):
-    def __init__(self, jwt_settings: JWTSettings, redis_client = RedisRepoInterface):
+    def __init__(self, jwt_settings: JWTSettingsEntity, redis_client = RedisRepoInterface):
         self.jwt_settings = jwt_settings
         self.redis_client = redis_client
 

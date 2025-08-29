@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class CloudData(BaseModel):
+class CloudDataSchema(BaseModel):
     cloudName: str
     apiKey: str
     timestamp: int

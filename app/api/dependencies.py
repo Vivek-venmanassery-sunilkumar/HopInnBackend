@@ -7,8 +7,7 @@ from app.infrastructure.repositories import SQLAlchemyUserRepository, CeleryEmai
 from app.infrastructure.redis.redis_client import RedisClient
 from app.infrastructure.config.jwt_settings_adaptor import get_core_jwt_settings
 from app.infrastructure.config.redis_settings_adaptor import get_core_redis_settings
-from app.core.entities.jwt_settings import JWTSettings
-from app.core.entities.redis_settings import RedisSettings
+from app.core.entities import JWTSettingsEntity, RedisSettingsEntity
 from app.core.redis.redis_repo import RedisRepoInterface
 from app.infrastructure.repositories import TravellerProfileImpl, UserRolesPermissionsImpl
 
@@ -30,7 +29,7 @@ def get_email_repository()->EmailRepo:
     return CeleryEmailRepo()
 
 def get_redis_client(
-        redis_settings: Annotated[RedisSettings, Depends(get_core_redis_settings)]
+        redis_settings: Annotated[RedisSettingsEntity, Depends(get_core_redis_settings)]
 )->RedisClient:
     return RedisClient(redis_settings)
 
@@ -46,7 +45,7 @@ RedisRepoDep = Annotated[RedisRepoInterface, Depends(get_redis_client)]
 TravellerProfileDep = Annotated[TravellerProfileInterface, Depends(get_traveller_profile_repo)]
 
 def get_token_repository(
-        jwt_settings: Annotated[JWTSettings, Depends(get_core_jwt_settings)],
+        jwt_settings: Annotated[JWTSettingsEntity, Depends(get_core_jwt_settings)],
         redis_client: RedisRepoDep
 )->TokenRepository:
     return TokenRepositoryImpl(jwt_settings, redis_client)

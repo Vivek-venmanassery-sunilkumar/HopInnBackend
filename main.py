@@ -27,6 +27,15 @@ doesnt work with annotated dependencies for middlewares
 redis_repo = get_redis_client(redis_settings=redis_client)
 token_repo = get_token_repository(jwt_settings=jwt_settings, redis_client=redis_client)
 
+#Add JWT middleware with exempt paths
+app.add_middleware(
+    JWTMiddleware,
+    token_repo = token_repo,
+    redis_repo= redis_repo,
+    exempt_paths=['/auth','/docs', '/openapi.json']
+)
+
+
 #Add CORS middleware 
 app.add_middleware(
     CORSMiddleware,
@@ -37,13 +46,6 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-#Add JWT middleware with exempt paths
-app.add_middleware(
-    JWTMiddleware,
-    token_repo = token_repo,
-    redis_repo= redis_repo,
-    exempt_paths=['/auth','/docs', '/openapi.json']
-)
 
 app.include_router(auth_router)
 app.include_router(role_router)

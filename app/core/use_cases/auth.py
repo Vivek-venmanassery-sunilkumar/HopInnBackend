@@ -1,5 +1,5 @@
-from app.core.entities.user import User
-from app.api.schemas import UserRoles,UserRegisterSchema, SafeUserResponse
+from app.core.entities import UserEntity
+from app.api.schemas import UserRolesSchema,UserRegisterSchema, SafeUserResponseSchema
 from app.core.repositories import UserRepository, TokenRepository, EmailRepo
 from app.core.redis.redis_repo import RedisRepoInterface
 from typing import Dict, Any
@@ -50,7 +50,7 @@ class SignUpUseCases:
         await self.redis_client.delete_signup_data(email=email) 
         return data["user_data"]
     
-    async def create_user(self, user_data: UserRegisterSchema)->User:
+    async def create_user(self, user_data: UserRegisterSchema)->UserEntity:
         return await self.user_repo.create_user(user_data)
     
     def send_email(self, email: str, otp: str)->None:
@@ -83,7 +83,7 @@ class LoginUseCases:
     async def execute(self, email: str, password: str)->tuple:
         user = await self._validate_user(email)
         await self._validate_password(password, user.password_hash)
-        user_response = SafeUserResponse(
+        user_response = SafeUserResponseSchema(
             id=user.id,
             isAdmin=user.is_admin,
             isGuide=user.is_guide,
@@ -93,7 +93,7 @@ class LoginUseCases:
         )
         tokens = self._generate_tokens(user.id)
         return user_response, tokens 
-    async def _validate_user(self, email: str)->User:
+    async def _validate_user(self, email: str)->UserEntity:
         user = await self.user_repo.get_user_by_email(email)
         if not user:
             raise ValueError("User not found")
@@ -119,5 +119,5 @@ class RolesUseCase:
     ):
         self.user_repo = user_repo
 
-    def get_roles(self, user_id:str)->UserRoles:
+    def get_roles(self, user_id:str)->UserRolesSchema:
         return self.user_repo.get_user_roles(user_id)

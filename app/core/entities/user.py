@@ -2,11 +2,12 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
-class User(BaseModel):
+class UserEntity(BaseModel):
     id: Optional[str] = None
-    full_name: str
+    first_name: str = None
+    last_name: str
     email: str
-    phone_number: str
+    phone_number: Optional[str] = None
     password_hash: str
     profile_image: Optional[str] = None
     google_id: Optional[str] = None
@@ -20,3 +21,15 @@ class User(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class AdminCreationEntity(BaseModel):
+    first_name: str = None
+    last_name: str = None
+    email: str
+    phone_number: str = None
+    password: str
+    is_admin: bool = True
+    is_active: bool = True
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

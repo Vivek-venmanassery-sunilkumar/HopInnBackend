@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class UserRoles(BaseModel):
+class UserRolesSchema(BaseModel):
     id: str
     isActive: bool
     isTraveller: bool

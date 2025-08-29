@@ -2,10 +2,14 @@ from pydantic import BaseModel
 from app.core.validations.types import StrictEmail
 from typing import Optional
 
-class TravellerProfile(BaseModel):
-    firstName: str
+
+
+class TravellerProfileSchema(BaseModel):
+    firstName: Optional[str]
     lastName: Optional[str]
-    email: StrictEmail
-    phoneNumber: str
+    email: Optional[StrictEmail]
+    phoneNumber: Optional[str]
+    profileImageUrl: Optional[str] = None
+    profileImagePublicId: Optional[str] = None
 
-
+    

@@ -1,5 +1,5 @@
 from pydantic import EmailStr
-from app.core.constants.validation_patterns import EMAIL_PATTERN
+from app.core.validations.regex_patterns.validation_patterns import EMAIL_PATTERN
 
 
 class StrictEmail(EmailStr):

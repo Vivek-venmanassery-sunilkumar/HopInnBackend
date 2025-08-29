@@ -1,12 +1,12 @@
 import json
 from redis import asyncio as aioredis
-from app.core.entities.redis_settings import RedisSettings
+from app.core.entities import RedisSettingsEntity
 from app.core.redis.redis_repo import RedisRepoInterface
 import logging
 logger = logging.getLogger(__name__)
 
 class RedisClient(RedisRepoInterface):
-    def __init__(self, redis_settings: RedisSettings):
+    def __init__(self, redis_settings: RedisSettingsEntity):
         self.redis_settings = redis_settings
         self.client = aioredis.Redis(
             host = self.redis_settings.HOST,

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class UserRolesAndPermissions(BaseModel):
+class UserRolesAndPermissionsEntity(BaseModel):
     is_traveller: bool
     is_guide: bool
     is_host: bool
