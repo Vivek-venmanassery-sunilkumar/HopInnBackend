@@ -34,5 +34,6 @@ class UserKyc(Base):
     kyc_image_url = Column(String(255))
     kyc_image_public_id = Column(String(255))
     verification_status = Column(String(20), default='pending')
+    rejection_reason = Column(String(200), nullable=True)
     created_at = Column(DateTime, server_default = func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

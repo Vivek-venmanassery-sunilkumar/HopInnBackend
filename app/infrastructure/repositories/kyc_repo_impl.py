@@ -1,11 +1,14 @@
 from app.core.repositories import KycRepo
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.entities import KycEntity
+from app.core.entities import KycEntity, KycListItemEntity
+from app.core.enums import KycVerificationStatus
 from app.infrastructure.database.models.users.user import UserKyc as KycModel
 from sqlalchemy.future import select
-from sqlalchemy import exists
+from sqlalchemy import exists, func
 from sqlalchemy.exc import SQLAlchemyError
+from typing import List
 import logging
+
 
 
 logger = logging.getLogger(__name__)
@@ -17,12 +20,15 @@ class KycRepoImpl(KycRepo):
     ):
         self.session = session
     
-    async def add(self, user_id: str, kyc_data: KycEntity)->bool:
+    #adding the kyc details from the user side
+    async def create(self, user_id: str, kyc_data: KycEntity)->bool:
         try:
             db_model = KycModel(
                 user_id= int(user_id),
                 kyc_image_url = kyc_data.kyc_image_url,
-                kyc_image_public_id=kyc_data.kyc_image_public_id
+                kyc_image_public_id=kyc_data.kyc_image_public_id,
+                rejection_reason = None,
+                verification_status = kyc_data.verification_status.value
             )
 
             self.session.add(db_model)
@@ -34,12 +40,39 @@ class KycRepoImpl(KycRepo):
             logger.error(f"Failed to add KYC for user {user_id}: {e}")
             return False
 
+    async def update_rejected(self, user_id: str, kyc_data: KycEntity)->bool:
+        try:
+            result = await self.session.execute(
+                select(KycModel)
+                .where(
+                    KycModel.user_id == int(user_id)
+                )
+            )
+            kyc = result.scalar_one_or_none()
+            if not kyc:
+                return False
+            
+            kyc.kyc_image_url =kyc_data.kyc_image_url
+            kyc.kyc_image_public_id = kyc_data.kyc_image_public_id
+            kyc.verification_status = KycVerificationStatus.PENDING.value
+            kyc.rejection_reason = None
+
+            await self.session.commit()
+            await self.session.refresh(kyc)
+            return True
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            logger.error(f"Failed to update rejected KYC for user {user_id}: {e}")
+            return False
+            
+    #checking if kyc data exists in the user side
     async def check_kyc_exists(self, user_id:str)->bool:
         result = await self.session.scalar(
            select(exists().where(KycModel.user_id == int(user_id)))
         )
         return result
     
+    #getting the kyc data for a particular user
     async def get(self, user_id: str)->KycEntity | None:
         kyc_data = await self.session.scalar(
             select(KycModel).where(KycModel.user_id == int(user_id))
@@ -51,5 +84,68 @@ class KycRepoImpl(KycRepo):
         return KycEntity(
             kyc_image_url=kyc_data.kyc_image_url,
             kyc_image_public_id=kyc_data.kyc_image_public_id,
-            kyc_verification_status=kyc_data.verification_status
+            verification_status=(KycVerificationStatus(kyc_data.verification_status)),
+            rejection_reason= kyc_data.rejection_reason
         )
+
+    #getting the kyc data according to the verification status in a paginated manner 
+    async def get_kyc_list(self, status: str, skip: int= 0, limit: int = 10)->List[KycListItemEntity]:
+        result = await self.session.execute(
+            select(KycModel).where(KycModel.verification_status == status).offset(skip).limit(limit)
+        )
+        logger.info(type(result))
+
+        logger.info(f'the data inside execute: {result}')
+
+        kyc_list_items = result.scalars().all()
+
+        return [
+            KycListItemEntity(
+                user_id=str(item.user_id),
+                kyc_image_url=item.kyc_image_url,
+                verification_status=KycVerificationStatus(item.verification_status),
+                rejection_reason=item.rejection_reason
+            )
+            for item in kyc_list_items
+        ]
+
+    #getting the total count of the kyc documents 
+    async def get_kyc_count(self, status: str)->int:
+        result = await self.session.execute(
+            select(func.count(KycModel.id))
+            .where(KycModel.verification_status==status)
+        )
+
+        return result.scalar() or 0
+
+    async def accept_kyc(self, user_id: str)->bool:
+        result = await self.session.execute(
+            select(KycModel).where(KycModel.user_id == int(user_id))
+        )
+
+        kyc = result.scalar_one_or_none()
+
+        if not kyc:
+            raise ValueError("KYC record not found")
+
+        kyc.verification_status = KycVerificationStatus.ACCEPTED.value
+        await self.session.commit()
+        await self.session.refresh(kyc)
+
+        return True
+    
+    async def reject_kyc(self, user_id: str, rejection_reason: str)->bool:
+        result = await self.session.execute(
+            select(KycModel).where(KycModel.user_id == int(user_id))
+        )
+
+        kyc = result.scalar_one_or_none()
+        if not kyc:
+            raise ValueError("KYC record not found")
+        
+        kyc.verification_status = KycVerificationStatus.REJECTED.value
+        kyc.rejection_reason = rejection_reason
+        await self.session.commit()
+        await self.session.refresh(kyc)
+        
+        return True

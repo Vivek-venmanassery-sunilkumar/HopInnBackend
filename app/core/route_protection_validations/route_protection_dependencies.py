@@ -24,5 +24,25 @@ async def verify_traveller(
     if not user_roles_permissions.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detiail='Account has been deactivated'
+            detail='Account has been deactivated'
+        )
+
+
+async def verify_admin(
+        request: Request,
+        user_roles_permissions_repo: UserRolesPermissionsInterface = Depends(get_user_roles_permissions)
+):
+    user_id = getattr(request.state, 'user_id', None)
+    logger.info(f'user_id: {user_id}')
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication required'
+        )
+    user_roles_permissions = await user_roles_permissions_repo.get_user_roles_and_permissions(user_id)
+
+    if not user_roles_permissions.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='You dont have admin privileges'
         )

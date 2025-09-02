@@ -1,5 +1,5 @@
 from .Traveller.authentication import UserRegisterSchema, OtpDataSchema, EmailSchema, LoginSchema, SafeUserResponseSchema
 from .Traveller.profile import TravellerProfileSchema
-from .Traveller.kyc import KycSchema, KycResponseSchema
+from .kyc import KycSchema, KycResponseSchema, KycListItemSchema, KycListResponseSchema, KycAcceptRequestSchema, KycRejectRequestSchema
 from .roles.roles import UserRolesSchema
 from .cloudinary_schema import CloudDataSchema
