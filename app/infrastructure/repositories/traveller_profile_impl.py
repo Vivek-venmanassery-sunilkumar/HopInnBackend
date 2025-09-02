@@ -5,6 +5,7 @@ from app.infrastructure.database.models.users.user import User as UserModel
 from sqlalchemy.future import select
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
+from typing import Optional
 
 import logging
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ class TravellerProfileImpl(TravellerProfileInterface):
     ):
         self.session = session
 
-    async def get(self, user_id: str)->TravellerProfileSchema:
+    async def get(self, user_id: str)->Optional[TravellerProfileSchema]:
         profile_data = await self.session.scalar(
             select(UserModel).where(UserModel.id == int(user_id))
         )

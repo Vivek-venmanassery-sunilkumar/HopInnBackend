@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from app.api.schemas import TravellerProfileSchema
+from typing import Optional
 
 
 class TravellerProfileInterface(ABC):
     @abstractmethod
-    async def get(user_id:str)->TravellerProfileSchema:
+    async def get(user_id:str)->Optional[TravellerProfileSchema]:
         pass
 
     @abstractmethod

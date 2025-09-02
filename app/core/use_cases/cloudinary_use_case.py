@@ -27,7 +27,7 @@ class CloudinaryUseCase:
         )
     
     @staticmethod
-    def delete_profile_image(public_id: str)->bool:
+    def delete_image(public_id: str)->bool:
         try:
             result = cloudinary.uploader.destroy(public_id)
 

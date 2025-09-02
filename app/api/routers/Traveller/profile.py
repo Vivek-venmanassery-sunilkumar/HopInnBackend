@@ -35,7 +35,7 @@ async def update_profile_detials(
         if update_data.profileImageUrl:
             public_id = await profile_uc.get_public_id(user_id = request.state.user_id)
             if public_id:
-                CloudinaryUseCase.delete_profile_image(public_id)
+                CloudinaryUseCase.delete_image(public_id)
         await profile_uc.update_profile_details(user_id = request.state.user_id, update_details=update_data)
         del update_data.profileImagePublicId
         return update_data
@@ -44,3 +44,4 @@ async def update_profile_detials(
             status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail= str(e)
         )
+
