@@ -1,4 +1,4 @@
-from app.core.entities import UserEntity, AdminCreationEntity
+from app.core.entities import UserEntity, AdminCreationEntity, GoogleSettingsEntity
 from app.core.repositories import UserRepository
 from app.infrastructure.database.models.users.user import User as UserModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +6,8 @@ from sqlalchemy.future import select
 from passlib.context import CryptContext
 from app.api.schemas import UserRegisterSchema, UserRolesSchema
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from google.oauth2 import id_token
+from google.auth.transport import requests
 import logging
 
 log = logging.getLogger(__name__)
@@ -13,8 +15,13 @@ log = logging.getLogger(__name__)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
 
 class SQLAlchemyUserRepository(UserRepository):
-    def __init__(self, session: AsyncSession):
+    def __init__(
+            self, 
+            session: AsyncSession,
+            google_client:GoogleSettingsEntity
+        ):
         self.session = session
+        self.google_client = google_client
     
     def __hash_password(self, password: str):
         return pwd_context.hash(password)
@@ -124,3 +131,42 @@ class SQLAlchemyUserRepository(UserRepository):
         )
 
         return result is not None
+    
+    async def verify_google_token(self, google_token: str)-> dict:
+        idinfo = id_token.verify_oauth2_token(
+            google_token,
+            requests.Request(),
+            self.google_client.CLIENT_ID
+        )
+        return idinfo
+    
+    async def update_google_user_info(self, email: str, google_id: str, picture: str)->bool:
+        """Update user's google information"""
+        result = await self.session.execute(
+            select(UserModel).where(UserModel.email == email)
+        )
+
+        db_user = result.scalars().first()
+        if db_user:
+            db_user.google_id = google_id
+            db_user.profile_image = picture
+            await self.session.commit()
+            return True
+        return False
+    
+    async def create_google_user(self, email: str, name: str, google_id: str, picture: str)->bool:
+        try:
+            db_user = UserModel(
+                first_name = name.split(' ')[0],
+                last_name = " ".join(name.split(" ")[1:]) if len(name.split(" ")) > 1 else "",
+                email=email,
+                google_id=google_id,
+                profile_image = picture,
+                is_traveller=True
+            )
+
+            self.session.add(db_user)
+            await self.session.commit()
+            return True
+        except Exception:
+            return False

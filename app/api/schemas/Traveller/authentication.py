@@ -33,3 +33,6 @@ class SafeUserResponseSchema(BaseModel):
     isHost: bool 
     isTraveller: bool 
     isActive: bool
+
+class TokenRequestSchema(BaseModel):
+    token: str

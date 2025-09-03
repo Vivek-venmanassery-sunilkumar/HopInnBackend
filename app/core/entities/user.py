@@ -8,7 +8,7 @@ class UserEntity(BaseModel):
     last_name: str
     email: str
     phone_number: Optional[str] = None
-    password_hash: str
+    password_hash: Optional[str] = None
     profile_image: Optional[str] = None
     google_id: Optional[str] = None
     is_admin: bool = False

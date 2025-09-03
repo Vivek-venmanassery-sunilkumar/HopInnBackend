@@ -7,7 +7,8 @@ from app.infrastructure.repositories import SQLAlchemyUserRepository, CeleryEmai
 from app.infrastructure.redis.redis_client import RedisClient
 from app.infrastructure.config.jwt_settings_adaptor import get_core_jwt_settings
 from app.infrastructure.config.redis_settings_adaptor import get_core_redis_settings
-from app.core.entities import JWTSettingsEntity, RedisSettingsEntity
+from app.infrastructure.config.google_settings_adaptor import get_core_google_settings
+from app.core.entities import JWTSettingsEntity, RedisSettingsEntity, GoogleSettingsEntity
 from app.core.redis.redis_repo import RedisRepoInterface
 from app.infrastructure.repositories import TravellerProfileImpl, UserRolesPermissionsImpl, KycRepoImpl
 
@@ -23,9 +24,10 @@ async def get_user_roles_permissions(
     return UserRolesPermissionsImpl(db)
 
 async def get_user_repository(
-        db: DbDep
+        db: DbDep,
+        google_client: Annotated[GoogleSettingsEntity, Depends(get_core_google_settings)]
 )-> UserRepository:
-    return SQLAlchemyUserRepository(db)
+    return SQLAlchemyUserRepository(db, google_client)
 
 def get_email_repository()->EmailRepo:
     return CeleryEmailRepo()

@@ -1,4 +1,4 @@
-from .Traveller.authentication import UserRegisterSchema, OtpDataSchema, EmailSchema, LoginSchema, SafeUserResponseSchema
+from .Traveller.authentication import UserRegisterSchema, OtpDataSchema, EmailSchema, LoginSchema, SafeUserResponseSchema, TokenRequestSchema
 from .Traveller.profile import TravellerProfileSchema
 from .kyc import KycSchema, KycResponseSchema, KycListItemSchema, KycListResponseSchema, KycAcceptRequestSchema, KycRejectRequestSchema
 from .roles.roles import UserRolesSchema

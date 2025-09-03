@@ -1,7 +1,10 @@
-from app.api.schemas import OtpDataSchema, EmailSchema, LoginSchema, UserRegisterSchema
+from app.api.schemas import OtpDataSchema, EmailSchema, LoginSchema, UserRegisterSchema, TokenRequestSchema
 from app.api.dependencies import UserRepoDep, EmailRepoDep, RedisRepoDep, TokenRepoDep
 from fastapi import APIRouter, HTTPException, status, Response
-from app.core.use_cases import SignUpUseCases, LoginUseCases
+from app.core.use_cases import SignUpUseCases, LoginUseCases, GoogleLoginUseCase
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -138,7 +141,7 @@ async def login(
         )
 
         return {
-            "user": user_response.model_dump(),
+            "user": user_response,
             "message": "Login successful"
         }
     except ValueError as e:
@@ -147,5 +150,60 @@ async def login(
             detail = {
                 'status':'error',
                 'message': str(e)
+            }
+        )
+
+@router.post('/google', status_code=status.HTTP_200_OK)
+async def google_login(
+    data: TokenRequestSchema,
+    user_repo: UserRepoDep,
+    token_repo: TokenRepoDep,
+    response: Response
+):
+    google_uc = GoogleLoginUseCase(user_repo=user_repo, token_repo=token_repo)
+
+    try:
+        user_response, tokens = await google_uc.execute(data.token)
+
+        response.set_cookie(
+            key="access_token",
+            value=tokens["access_token"],
+            httponly=True,
+            secure = False,
+            max_age = 30*24*60*60,
+            samesite='lax',
+            path='/'
+        )
+        
+        response.set_cookie(
+            key="refresh_token",
+            value = tokens["refresh_token"],
+            httponly=True,
+            secure = False,
+            max_age = 30*24*60*60,
+            samesite='lax',
+            path='/'
+        )
+
+        return {
+            "user": user_response,
+            "message": "google login successfull"
+        }
+    
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                'status': 'error',
+                'message': str(e)
+            }
+        )
+    except Exception as e:
+        logger.info(f"Unexpected error in Google login: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                'status': 'error',
+                'message': 'Internal server error during Google authentication'
             }
         )

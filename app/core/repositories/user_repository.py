@@ -28,3 +28,15 @@ class UserRepository(ABC):
     @abstractmethod
     async def does_user_exist(self, email: str)->bool:
         pass
+
+    @abstractmethod
+    async def verify_google_token(self, google_token: str)->dict:
+        pass
+
+    @abstractmethod
+    async def update_google_user_info(self, email: str, google_id: str, picture: str)->UserEntity:
+        pass
+
+    @abstractmethod
+    async def create_google_user(self, email: str, name: str, google_id: str, picture: str)->UserEntity:
+        pass

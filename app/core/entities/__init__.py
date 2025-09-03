@@ -1,6 +1,7 @@
 from .Traveller.profile import TravellerUpdateProfileEntity
-from .jwt_settings import JWTSettingsEntity
-from .redis_settings import RedisSettingsEntity
+from .settings.jwt_settings import JWTSettingsEntity
+from .settings.redis_settings import RedisSettingsEntity
+from .settings.google_settings import GoogleSettingsEntity
 from .user_roles_and_permissions import UserRolesAndPermissionsEntity
 from .user import UserEntity, AdminCreationEntity
 from .kyc import KycEntity, KycListItemEntity
