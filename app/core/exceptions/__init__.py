@@ -1,0 +1,1 @@
+from .kyc_exceptions import KycNotAcceptedError

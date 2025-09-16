@@ -72,6 +72,19 @@ class KycRepoImpl(KycRepo):
         )
         return result
     
+    #checking if kyc data exists and is accepted
+    async def check_kyc_accepted(self, user_id:str)->bool:
+        kyc_data = await self.get(user_id=user_id)
+        if not kyc_data:
+            return False
+        
+        if kyc_data.verification_status != KycVerificationStatus.ACCEPTED:
+            return False
+        
+        return True
+
+        
+    
     #getting the kyc data for a particular user
     async def get(self, user_id: str)->KycEntity | None:
         kyc_data = await self.session.scalar(
@@ -149,3 +162,5 @@ class KycRepoImpl(KycRepo):
         await self.session.refresh(kyc)
         
         return True
+    
+    

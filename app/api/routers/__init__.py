@@ -3,3 +3,4 @@ from .Traveller.profile import router as profile_router
 from .roles.roles import router as role_router 
 from .sign_cloud_router import router as cloudinary_router
 from .kyc import router as kyc_router
+from .onboarding.onboard import router as onboard_router

@@ -35,3 +35,7 @@ class KycRepo(ABC):
     @abstractmethod
     async def reject_kyc(self, user_id: str, rejection_reason: str)->bool:
         pass
+
+    @abstractmethod
+    async def check_kyc_accepted(self, user_id:str)->bool:
+        pass

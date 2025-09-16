@@ -67,3 +67,6 @@ class KycUseCase:
 
     async def reject_kyc(self, user_id:str, rejection_reason: str)->bool:
         return await self.kyc_repo.reject_kyc(user_id = user_id, rejection_reason=rejection_reason)
+    
+    async def check_kyc_accepted(self, user_id: str)->bool:
+        return await self.kyc_repo.check_kyc_accepted(user_id=user_id)

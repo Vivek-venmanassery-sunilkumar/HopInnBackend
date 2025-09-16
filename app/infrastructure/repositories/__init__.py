@@ -5,3 +5,4 @@ from .token_repository_impl import TokenRepositoryImpl
 from .user_permission_roles_impl import UserRolesPermissionsImpl
 from .traveller_profile_impl import TravellerProfileImpl
 from .kyc_repo_impl import KycRepoImpl
+from .onboard_repo_impl import OnboardRepoImpl

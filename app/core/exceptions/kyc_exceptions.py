@@ -1,0 +1,2 @@
+class KycNotAcceptedError(Exception):
+    pass

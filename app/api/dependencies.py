@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.database.session import get_db
-from app.core.repositories import UserRepository, EmailRepo, TokenRepository,TravellerProfileInterface, UserRolesPermissionsInterface, KycRepo
+from app.core.repositories import UserRepository, EmailRepo, TokenRepository,TravellerProfileInterface, UserRolesPermissionsInterface, KycRepo, OnboardRepo
 from app.infrastructure.repositories import SQLAlchemyUserRepository, CeleryEmailRepo, TokenRepositoryImpl
 from app.infrastructure.redis.redis_client import RedisClient
 from app.infrastructure.config.jwt_settings_adaptor import get_core_jwt_settings
@@ -10,7 +10,7 @@ from app.infrastructure.config.redis_settings_adaptor import get_core_redis_sett
 from app.infrastructure.config.google_settings_adaptor import get_core_google_settings
 from app.core.entities import JWTSettingsEntity, RedisSettingsEntity, GoogleSettingsEntity
 from app.core.redis.redis_repo import RedisRepoInterface
-from app.infrastructure.repositories import TravellerProfileImpl, UserRolesPermissionsImpl, KycRepoImpl
+from app.infrastructure.repositories import TravellerProfileImpl, UserRolesPermissionsImpl, KycRepoImpl, OnboardRepoImpl 
 
 
 '''get_user_roles_permissions is a dependecy injection function that is to be used
@@ -28,6 +28,11 @@ async def get_user_repository(
         google_client: Annotated[GoogleSettingsEntity, Depends(get_core_google_settings)]
 )-> UserRepository:
     return SQLAlchemyUserRepository(db, google_client)
+
+async def get_onboard_repository(
+        db:DbDep,
+)->OnboardRepo:
+    return OnboardRepoImpl(db)
 
 def get_email_repository()->EmailRepo:
     return CeleryEmailRepo()
@@ -52,6 +57,7 @@ EmailRepoDep = Annotated[EmailRepo, Depends(get_email_repository)]
 RedisRepoDep = Annotated[RedisRepoInterface, Depends(get_redis_client)]
 TravellerProfileDep = Annotated[TravellerProfileInterface, Depends(get_traveller_profile_repo)]
 KycRepoDep = Annotated[KycRepo, Depends(get_kyc_repo)]
+OnboardRepoDep = Annotated[OnboardRepo, Depends(get_onboard_repository)]
 
 def get_token_repository(
         jwt_settings: Annotated[JWTSettingsEntity, Depends(get_core_jwt_settings)],

@@ -4,6 +4,7 @@ from app.config.database import db_settings
 from alembic import context
 from app.infrastructure.database.session import Base
 from app.infrastructure.database.models.users.user import User, UserKyc
+from app.infrastructure.database.models.onboard import Guide, Languages
 
 
 # this is the Alembic Config object, which provides
