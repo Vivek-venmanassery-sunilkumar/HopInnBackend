@@ -9,6 +9,7 @@ class UserRolesSchema(BaseModel):
     isAdmin: bool
     isHost: bool
     isHostBlocked: bool | None = None
+    isKycVerified: bool | None = None
 
     class Config:
         from_attributes = True
