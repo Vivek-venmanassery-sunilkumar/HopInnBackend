@@ -52,14 +52,20 @@ class JWTMiddleware(BaseHTTPMiddleware):
         if not token:
             return JSONResponse(
                 status_code=401,
-                content={'detail':'Invalid or expired token'}
+                content={
+                    'status': 'error',
+                    'message': 'Invalid Token, Log in again'
+                }
             )
         #Verify token
         payload = await self.verify_access_token(token)
         if not payload:
             return JSONResponse(
                 status_code=401,
-                content={'detail': 'Invalid or expired token'}
+                content={
+                    'status': 'error',
+                    'message': 'Invalid Token, Log in again'
+                }
             )
 
         #extract user_id
@@ -67,7 +73,10 @@ class JWTMiddleware(BaseHTTPMiddleware):
         if not user_id:
             return JSONResponse(
                 status_code = 401,
-                content={'detail': 'Invalid token payload'}
+                content={
+                    'status': 'error',
+                    'message': 'Invalid Token, Log in again'
+                }
             )
         
         #Add user_id and token paylod to request state

@@ -5,8 +5,10 @@ class UserRolesSchema(BaseModel):
     isActive: bool
     isTraveller: bool
     isGuide: bool
+    isGuideBlocked: bool | None = None
     isAdmin: bool
     isHost: bool
+    isHostBlocked: bool | None = None
 
     class Config:
         from_attributes = True

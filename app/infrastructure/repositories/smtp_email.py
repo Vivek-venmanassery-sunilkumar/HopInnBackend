@@ -8,7 +8,7 @@ class SMTPEmail:
     def send(self,email: str, otp: str) -> None:
         msg = EmailMessage()
         msg.set_content(f"Your otp: {otp}")
-        msg['Subject'] = "Verification Code"
+        msg['Subject'] = "Verification Code for signing up to HopInn, This otp expires in 60 seconds"
         msg['From'] = email_settings.FROM_EMAIL
         msg['To'] = email
 

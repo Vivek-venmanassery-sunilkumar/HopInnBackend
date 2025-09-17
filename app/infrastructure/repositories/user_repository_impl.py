@@ -1,6 +1,7 @@
 from app.core.entities import UserEntity, AdminCreationEntity, GoogleSettingsEntity
 from app.core.repositories import UserRepository
 from app.infrastructure.database.models.users.user import User as UserModel
+from app.infrastructure.database.models.onboard import Guide,Host
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from passlib.context import CryptContext
@@ -84,18 +85,23 @@ class SQLAlchemyUserRepository(UserRepository):
         return pwd_context.verify(password, hashed_password)
 
     async def get_user_roles(self, user_id: str)->UserRolesSchema:
-        db_user = await self.session.scalar(
-            select(UserModel).where(UserModel.id == int(user_id))
-        ) 
+        query = (
+            select(UserModel, Guide.is_blocked.label('guide_is_blocked'), Host.is_blocked.label('host_is_blocked'))
+            .outerjoin(Guide, Guide.user_id == UserModel.id)
+            .outerjoin(Host, Host.user_id == UserModel.id)
+            .where(UserModel.id == int(user_id))
+        )
+        result = await self.session.execute(query)
+        row = result.first()
+        db_user, guide_is_blocked, host_is_blocked = row 
 
-        if not db_user:
-            return None
-        
         return UserRolesSchema(
             id=str(db_user.id),
             isTraveller=db_user.is_traveller,
             isGuide=db_user.is_guide,
+            isGuideBlocked=guide_is_blocked if guide_is_blocked is not None else False,
             isHost = db_user.is_host,
+            isHostBlocked=host_is_blocked if host_is_blocked is not None else False,
             isAdmin=db_user.is_admin,
             isActive=db_user.is_active,
         )
