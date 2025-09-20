@@ -29,7 +29,6 @@ class OnboardRepoImpl(OnboardRepo):
             db_guide = Guide(
                 user_id = int(user_id),
                 bio = data.about,
-                dob = data.dob,
                 profession = data.profession,
                 hourly_rate = data.hourly_rate,
                 expertise = data.expertise,
@@ -110,7 +109,6 @@ class OnboardRepoImpl(OnboardRepo):
             host_insert_query = insert(Host).values(
                 user_id=int(user_id),
                 about=data.about,
-                dob=data.dob,
                 profession=data.profession,
             ).returning(Host.id)
 

@@ -25,7 +25,6 @@ class PropertyImageEntity(BaseModel):
 
 class HostOnboardEntity(BaseModel):
     about: str
-    dob: str
     profession: str
     known_languages: list = Field(alias="knownLanguages")
     property_name: str = Field(alias="propertyName")

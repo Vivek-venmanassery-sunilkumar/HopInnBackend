@@ -3,7 +3,7 @@ from starlette.requests import Request
 from app.api.dependencies import TravellerProfileDep
 from app.core.use_cases import TravellerProfileUseCase, CloudinaryUseCase
 from app.core.route_protection_validations.route_protection_dependencies import verify_traveller
-from app.api.schemas import TravellerProfileSchema
+from app.api.schemas import TravellerProfileUpdateSchema
 
 router = APIRouter(prefix='/profile',tags=['profile'])
 
@@ -27,7 +27,7 @@ async def get_profile_details(
 @router.put('/update', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_traveller)])
 async def update_profile_detials(
     request: Request,
-    update_data: TravellerProfileSchema,
+    update_data: TravellerProfileUpdateSchema,
     traveller_profile: TravellerProfileDep
 ):
     profile_uc = TravellerProfileUseCase(traveller_profile=traveller_profile)

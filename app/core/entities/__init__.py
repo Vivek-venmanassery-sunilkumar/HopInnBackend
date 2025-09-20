@@ -5,6 +5,6 @@ from .settings.google_settings import GoogleSettingsEntity
 from .user_roles_and_permissions import UserRolesAndPermissionsEntity
 from .user import UserEntity, AdminCreationEntity
 from .kyc import KycEntity, KycListItemEntity
-from .Guide.guide import GuideOnboardEntity
+from .guide.guide import GuideOnboardEntity
 from .host import HostOnboardEntity, PropertyAddressEntity, PropertyImageEntity
 

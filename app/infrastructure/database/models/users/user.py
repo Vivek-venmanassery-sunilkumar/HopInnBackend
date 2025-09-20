@@ -1,5 +1,5 @@
 from app.infrastructure.database.session import Base
-from sqlalchemy import Column, Integer, Boolean, DateTime, String, ForeignKey
+from sqlalchemy import Column, Integer, Boolean, DateTime, String, ForeignKey, Date
 from sqlalchemy.sql import func
 
 class User(Base):
@@ -11,6 +11,7 @@ class User(Base):
     email = Column(String(255), unique = True, nullable= False)
     phone_number = Column(String(20), nullable = True)
     password_hash = Column(String(255))
+    dob = Column(Date, nullable=True)
     profile_image = Column(String(500), nullable=True)
     profile_image_public_id = Column(String(255), nullable = True)
     google_id = Column(String(100), unique= True, nullable= True)

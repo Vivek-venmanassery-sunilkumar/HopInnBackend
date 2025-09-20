@@ -1,5 +1,5 @@
 from app.infrastructure.database.session import Base
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, func
 from geoalchemy2 import Geography
 from sqlalchemy import UniqueConstraint
 
@@ -9,7 +9,6 @@ class Guide(Base):
     id = Column(Integer, primary_key = True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     bio = Column(String(255), nullable=False)
-    dob = Column(String(255), nullable=False)
     profession=Column(String(255), nullable=False)
     expertise=Column(String(255), nullable=False)
     hourly_rate = Column(String(255), nullable=False)
@@ -21,6 +20,8 @@ class Guide(Base):
     country = Column(String(255), nullable=False)
     location = Column(Geography(geometry_type="POINT", srid=4326), nullable=True)
     is_blocked = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 class Languages(Base):
     __tablename__ = 'languages'
@@ -39,7 +40,6 @@ class Host(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     about = Column(String(255), nullable=False)
-    dob = Column(String(255), nullable=False)
     profession = Column(String(255), nullable=False)
     is_blocked = Column(Boolean, default=False, nullable=False)
 

@@ -59,8 +59,6 @@ async def onboard_host(
     )
 
     try:
-        # property_address = PropertyAddressEntity(**host_data.propertyAddress.model_dump())
-        # property_images = [PropertyImageEntity(**img.model_dump()) for img in host_data.propertyImages]
         host_entity = HostOnboardEntity(
             **host_data.model_dump()
         ) 

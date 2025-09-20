@@ -21,7 +21,6 @@ class PropertyImageSchema(BaseModel):
 
 class HostOnboardSchema(BaseModel):
     about: str
-    dob: str  
     profession: str
     knownLanguages: List[str]
     propertyName: str

@@ -29,6 +29,7 @@ class TravellerProfileImpl(TravellerProfileInterface):
             firstName = profile_data.first_name,
             lastName=profile_data.last_name,
             email=profile_data.email,
+            dob = profile_data.dob,
             phoneNumber=profile_data.phone_number,
             profileImageUrl=profile_data.profile_image
         )
