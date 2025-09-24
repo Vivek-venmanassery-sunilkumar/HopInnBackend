@@ -3,5 +3,6 @@ from .Traveller.profile import TravellerProfileSchema, TravellerProfileUpdateSch
 from .kyc import KycSchema, KycResponseSchema, KycListItemSchema, KycListResponseSchema, KycAcceptRequestSchema, KycRejectRequestSchema
 from .roles.roles import UserRolesSchema
 from .cloudinary_schema import CloudDataSchema
-from .guide.guide import GuideOnboardSchema
-from .Host.host import HostOnboardSchema, PropertyImageSchema, PropertyAddressSchema
+from .guide.guide import GuideOnboardSchema, GuideProfileSchema
+from .host.host import HostOnboardSchema, PropertyImageSchema, PropertyAddressSchema, HostProfileSchema
+from .address import AddressSchema

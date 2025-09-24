@@ -9,6 +9,7 @@ from app.api.schemas import UserRegisterSchema, UserRolesSchema
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from typing import Optional
 import logging
 
 log = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ class SQLAlchemyUserRepository(UserRepository):
     def __init__(
             self, 
             session: AsyncSession,
-            google_client:GoogleSettingsEntity
+            google_client:Optional[GoogleSettingsEntity] = None
         ):
         self.session = session
         self.google_client = google_client
