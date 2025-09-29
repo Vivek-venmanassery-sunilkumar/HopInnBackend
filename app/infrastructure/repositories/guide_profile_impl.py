@@ -1,9 +1,13 @@
 from app.core.repositories import GuideProfileInterface
+from app.core.entities import GuideOnboardEntity
 from app.api.schemas import GuideProfileSchema, AddressSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.database.models.onboard import Guide, Languages
 from sqlalchemy.future import select
+from sqlalchemy import update, delete, insert
+from sqlalchemy.exc import SQLAlchemyError
 from geoalchemy2.shape import to_shape
+from geoalchemy2 import WKTElement
 from typing import Optional
 
 import logging
@@ -46,11 +50,54 @@ class GuideProfileImpl(GuideProfileInterface):
         return GuideProfileSchema(
             bio=profile_data.bio,
             profession=profile_data.profession,
-            hourly_rate=profile_data.hourly_rate,
+            hourlyRate=profile_data.hourly_rate,
             expertise=profile_data.expertise,
             address=address_data,
             knownLanguages=known_languages,
             joinedOn = profile_data.created_at.date(),
         )
 
-        
+    async def update_profile(self, user_id: str, guide_data: GuideOnboardEntity)->bool:
+        logger.info("I am inside the update profile function in the guideprofileimplementation")
+        try:
+            guide_update_stmt = (
+                update(Guide)
+                .where(Guide.user_id == int(user_id))
+                .values(
+                    bio=guide_data.about,
+                    profession=guide_data.profession,
+                    expertise=guide_data.expertise,
+                    hourly_rate=guide_data.hourly_rate,
+                    landmark=guide_data.landmark,
+                    pincode=guide_data.pincode,
+                    district=guide_data.district,
+                    state=guide_data.state,
+                    country=guide_data.country,
+                    location=WKTElement(f'POINT({guide_data.coordinates['lon']} {guide_data.coordinates['lat']})', srid=4326) 
+                    if guide_data.coordinates and 'lat' in guide_data.coordinates and 
+                    'lon' in guide_data.coordinates else None
+                )
+            )
+
+            await self.session.execute(guide_update_stmt)
+
+            delete_languages_stmt = (
+                delete(Languages)
+                .where(Languages.user_id == int(user_id))
+            )
+            await self.session.execute(delete_languages_stmt)
+
+            if guide_data.known_languages:
+                languages_data = [
+                    {'user_id': int(user_id), 'language': lang}
+                    for lang in guide_data.known_languages
+                ]
+
+
+                await self.session.execute(insert(Languages).values(languages_data))
+            
+            await self.session.commit()
+            return True
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            return False

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, status, HTTPException, Depends
 from app.api.schemas import GuideOnboardSchema, HostOnboardSchema
-from app.api.dependencies import KycRepoDep, OnboardRepoDep
+from app.api.dependencies import KycRepoDep, OnboardRepoDep, PropertyRepoDepo
 from app.core.use_cases import OnBoardingUseCase
-from app.core.entities import GuideOnboardEntity, HostOnboardEntity, PropertyAddressEntity, PropertyImageEntity
+from app.core.entities import GuideOnboardEntity, HostOnboardEntity
 from starlette.requests import Request
 from app.core.exceptions import KycNotAcceptedError
 from app.core.route_protection_validations.route_protection_dependencies import verify_traveller
@@ -51,11 +51,13 @@ async def onboard_host(
         request: Request,
         host_data:HostOnboardSchema,
         onboarding_repo: OnboardRepoDep,
+        property_repo: PropertyRepoDepo,
         kyc_repo: KycRepoDep
 ):
     onboard_uc = OnBoardingUseCase(
        kyc_repo=kyc_repo,
-       onboard_repo=onboarding_repo
+       onboard_repo=onboarding_repo,
+       property_repo = property_repo
     )
 
     try:
@@ -63,11 +65,14 @@ async def onboard_host(
             **host_data.model_dump()
         ) 
 
-        result = await onboard_uc.onboard_host(
-            user_id=request.state.user_id,
+        success = await onboard_uc.onboard_host(
+            user_id=str(request.state.user_id),
             data = host_entity
         )
-        return {"success": True, "message": "Host onboarded successfully"}
+        if success:
+            return {"success": True, "message": "Host onboarded successfully"}
+        else:
+            return {"success": False, "message": "Host onboarding failed"}
     except KycNotAcceptedError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

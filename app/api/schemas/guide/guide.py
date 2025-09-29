@@ -20,7 +20,7 @@ class GuideOnboardSchema(BaseModel):
 class GuideProfileSchema(BaseModel):
     bio: str
     profession: str
-    hourly_rate: str
+    hourlyRate: str
     expertise: str
     address: AddressSchema
     knownLanguages: list

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routers import auth_router, profile_router, role_router, cloudinary_router, kyc_router, onboard_router, guide_profile_router, host_profile_router
+from app.api.routers import auth_router, profile_router, role_router, cloudinary_router, kyc_router, onboard_router, guide_profile_router, host_profile_router, property_router
 from app.api.middlewares.jwt_middleware import JWTMiddleware
 from app.api.dependencies import get_token_repository, get_redis_client
 from app.infrastructure.config.jwt_settings_adaptor import get_core_jwt_settings
@@ -55,3 +55,4 @@ app.include_router(kyc_router)
 app.include_router(onboard_router)
 app.include_router(host_profile_router)
 app.include_router(guide_profile_router)
+app.include_router(property_router)

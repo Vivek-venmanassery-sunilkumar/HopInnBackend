@@ -1,5 +1,5 @@
 from app.infrastructure.database.session import Base
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, func
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, func, Numeric
 from geoalchemy2 import Geography
 from sqlalchemy import UniqueConstraint
 
@@ -51,6 +51,9 @@ class Property(Base):
     host_id = Column(Integer, ForeignKey('host.id', ondelete='CASCADE'), nullable=False)
     property_name = Column(String(255), nullable=False)
     property_description = Column(String(255), nullable=False)
+    max_guests = Column(Integer, nullable=False)
+    bedrooms = Column(Integer, nullable=False)
+    price_per_night = Column(Numeric(10,2), nullable=False)
     property_type = Column(String(255), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

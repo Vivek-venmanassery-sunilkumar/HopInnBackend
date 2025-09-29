@@ -60,7 +60,9 @@ async def verify_guide(
         )
     user_roles_permissions = await user_roles_permissions_repo.get_user_roles_and_permissions(user_id)
 
-    if not user_roles_permissions.is_guide and not user_roles_permissions.is_guide_blocked:
+    logger.info(f'guide permissions: {user_roles_permissions}')
+
+    if not user_roles_permissions.is_guide or user_roles_permissions.is_guide_blocked:
         raise HTTPException(
             status_code = status.HTTP_403_FORBIDDEN,
             detail='You dont have guide privileges'
