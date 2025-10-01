@@ -39,3 +39,8 @@ class HostProfileSchema(BaseModel):
     profession: str
     knownLanguages: List[str]
     joinedOn: date
+
+class HostProfileUpdateSchema(BaseModel):
+    about: Optional[str] = None
+    profession: Optional[str] = None
+    knownLanguages: Optional[List[str]] = None
