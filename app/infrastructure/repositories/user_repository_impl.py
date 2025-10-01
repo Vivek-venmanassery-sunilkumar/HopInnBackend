@@ -26,6 +26,11 @@ class SQLAlchemyUserRepository(UserRepository):
         self.google_client = google_client
     
     def __hash_password(self, password: str):
+        # Truncate password to 72 bytes to avoid bcrypt error
+        password_bytes = password.encode('utf-8')
+        if len(password_bytes) > 72:
+            # Truncate to 72 bytes, not 72 characters
+            password = password_bytes[:72].decode('utf-8', errors='ignore')
         return pwd_context.hash(password)
 
     async def create_user(self, user_data: UserRegisterSchema) -> bool:
@@ -83,6 +88,15 @@ class SQLAlchemyUserRepository(UserRepository):
         )
     
     async def verify_password(self, password, hashed_password):
+        # Truncate password to 72 bytes to avoid bcrypt error
+        password_bytes = password.encode('utf-8')
+        original_length = len(password_bytes)
+        
+        if original_length > 72:
+            # Truncate to 72 bytes, not 72 characters
+            password = password_bytes[:72].decode('utf-8', errors='ignore')
+            log.info(f"Password truncated from {original_length} bytes to {len(password.encode('utf-8'))} bytes")
+        
         return pwd_context.verify(password, hashed_password)
 
     async def get_user_roles(self, user_id: str)->UserRolesSchema:
