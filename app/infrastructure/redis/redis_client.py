@@ -30,7 +30,7 @@ class RedisClient(RedisRepoInterface):
             time=self.redis_settings.OTP_EXPIRE_SECONDS,
             value = json.dumps(data)
         )
-        logger.info(f"is the data saved: ", success)
+        logger.info(f"is the data saved: {success}")
 
     async def get_signup_data(self, email: str)->dict | None:
         key = f"signup:{email}"

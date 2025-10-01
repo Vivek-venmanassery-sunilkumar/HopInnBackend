@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
+from datetime import date
 
 
 
@@ -32,3 +33,9 @@ class HostOnboardSchema(BaseModel):
     amenities: List[str]
     propertyAddress: PropertyAddressSchema
     propertyImages: List[PropertyImageSchema]
+
+class HostProfileSchema(BaseModel):
+    about: str
+    profession: str
+    knownLanguages: List[str]
+    joinedOn: date

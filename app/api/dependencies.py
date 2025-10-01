@@ -2,15 +2,14 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.database.session import get_db
-from app.core.repositories import UserRepository, EmailRepo, TokenRepository,TravellerProfileInterface, UserRolesPermissionsInterface, KycRepo, OnboardRepo
-from app.infrastructure.repositories import SQLAlchemyUserRepository, CeleryEmailRepo, TokenRepositoryImpl
+from app.core.repositories import UserRepository, EmailRepo, TokenRepository,TravellerProfileInterface, UserRolesPermissionsInterface, KycRepo, OnboardRepo, GuideProfileInterface, HostProfileInterface, PropertyRepo
 from app.infrastructure.redis.redis_client import RedisClient
 from app.infrastructure.config.jwt_settings_adaptor import get_core_jwt_settings
 from app.infrastructure.config.redis_settings_adaptor import get_core_redis_settings
 from app.infrastructure.config.google_settings_adaptor import get_core_google_settings
 from app.core.entities import JWTSettingsEntity, RedisSettingsEntity, GoogleSettingsEntity
 from app.core.redis.redis_repo import RedisRepoInterface
-from app.infrastructure.repositories import TravellerProfileImpl, UserRolesPermissionsImpl, KycRepoImpl, OnboardRepoImpl 
+from app.infrastructure.repositories import TravellerProfileImpl, UserRolesPermissionsImpl, KycRepoImpl, OnboardRepoImpl, GuideProfileImpl, HostProfileImpl, SQLAlchemyUserRepository, CeleryEmailRepo, TokenRepositoryImpl, PropertyRepoImpl
 
 
 '''get_user_roles_permissions is a dependecy injection function that is to be used
@@ -29,10 +28,25 @@ async def get_user_repository(
 )-> UserRepository:
     return SQLAlchemyUserRepository(db, google_client)
 
+async def get_guide_profile_repository(
+        db:DbDep
+)->GuideProfileInterface:
+    return GuideProfileImpl(db)
+
+async def get_host_profile_repository(
+        db:DbDep
+)->HostProfileInterface:
+    return HostProfileImpl(db)
+
 async def get_onboard_repository(
         db:DbDep,
 )->OnboardRepo:
     return OnboardRepoImpl(db)
+
+async def get_property_repository(
+        db: DbDep,
+)->PropertyRepo:
+    return PropertyRepoImpl(db)
 
 def get_email_repository()->EmailRepo:
     return CeleryEmailRepo()
@@ -52,6 +66,9 @@ async def get_kyc_repo(
 )->KycRepo:
     return KycRepoImpl(db)
 
+PropertyRepoDepo = Annotated[PropertyRepo, Depends(get_property_repository)]
+HostProfileDep = Annotated[HostProfileInterface, Depends(get_host_profile_repository)]
+GuideProfileDep = Annotated[GuideProfileInterface, Depends(get_guide_profile_repository)]
 UserRepoDep = Annotated[UserRepository, Depends(get_user_repository)]
 EmailRepoDep = Annotated[EmailRepo, Depends(get_email_repository)]
 RedisRepoDep = Annotated[RedisRepoInterface, Depends(get_redis_client)]

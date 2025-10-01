@@ -14,14 +14,5 @@ class GuideOnboardEntity(BaseModel):
     profession: str
     hourly_rate: str = Field(alias="hourlyRate")
 
-    class config:
-        allow_population_by_field_name = True
-
-
-
-class GuideProfile(BaseModel):
-    user_id: str
-    bio: str
-    expertise: str
-    dob: str
-    is_blocked: bool
+    class Config:
+        populate_by_name = True

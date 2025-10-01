@@ -19,6 +19,7 @@ async def initiate_signup(
     auth_uc = SignUpUseCases(user_repo, redis_client, email_repo)
     try:
         otp, email = await auth_uc.initiate_signup(user_data.model_dump())
+        logger.info(otp)
         auth_uc.send_email(email=email, otp=otp)
         return {
             "status": "success",
