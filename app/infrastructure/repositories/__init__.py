@@ -9,3 +9,4 @@ from .onboard_repo_impl import OnboardRepoImpl
 from .guide_profile_impl import GuideProfileImpl
 from .host_profile_impl import HostProfileImpl
 from .property_repo_impl import PropertyRepoImpl
+from .admin_user_management_impl import AdminUserManagementImpl
