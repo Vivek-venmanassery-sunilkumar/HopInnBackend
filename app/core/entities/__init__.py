@@ -1,4 +1,4 @@
-from .Traveller.profile import TravellerUpdateProfileEntity
+from .traveller.profile import TravellerUpdateProfileEntity
 from .settings.jwt_settings import JWTSettingsEntity
 from .settings.redis_settings import RedisSettingsEntity
 from .settings.google_settings import GoogleSettingsEntity
