@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity
+from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity
 from typing import List, Optional
 
 class PropertyRepo(ABC):
@@ -17,4 +17,8 @@ class PropertyRepo(ABC):
 
     @abstractmethod
     async def get_property_by_id(self, property_id: int)->Optional[PropertyOnlyDetailsEntity]:
+        pass
+
+    @abstractmethod
+    async def update_property(self, property_id: str, property_data: PropertyUpdateEntity, host_id: int)->bool:
         pass

@@ -80,6 +80,39 @@ class HostOnboardEntity(BaseModel):
     }
 
 
+class PropertyUpdateEntity(BaseModel):
+    """Entity for handling property updates with optional fields"""
+    property_name: Optional[str] = Field(None, alias="propertyName")
+    property_description: Optional[str] = Field(None, alias="propertyDescription")
+    property_type: Optional[str] = Field(None, alias="propertyType")
+    max_guests: Optional[int] = Field(None, gt=0, description="Must be greater than 0", alias="maxGuests")
+    bedrooms: Optional[int] = Field(None, gt=0, description="Must be greater than 0")
+    price_per_night: Optional[float] = Field(None, gt=0, description="Must be greater than 0", alias="pricePerNight")
+    amenities: Optional[list] = None
+    property_address: Optional[PropertyAddressEntity] = Field(None, alias="propertyAddress")
+    property_images: Optional[List[PropertyImageEntity]] = Field(None, alias="propertyImages")
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        from_attributes=True
+    )
+
+    def get_update_data(self) -> dict:
+        """Return only non-None fields for database update"""
+        return self.model_dump(exclude_none=True, by_alias=False)
+
+    def has_address_update(self) -> bool:
+        """Check if address needs to be updated"""
+        return self.property_address is not None
+
+    def has_amenities_update(self) -> bool:
+        """Check if amenities need to be updated"""
+        return self.amenities is not None
+
+    def has_images_update(self) -> bool:
+        """Check if images need to be updated"""
+        return self.property_images is not None
+
 class HostEntity(BaseModel):
     about: str
     profession: str

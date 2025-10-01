@@ -1,6 +1,6 @@
 from app.core.repositories import PropertyRepo
-from app.api.schemas import PropertySchema
-from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity
+from app.api.schemas import PropertySchema, PropertyUpdateSchema
+from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity
 from typing import List
 
 class PropertyUseCase:
@@ -24,6 +24,19 @@ class PropertyUseCase:
         host_id = await self.property_repo.get_host_id(user_id)
         property_details = await self.property_repo.get_properties_by_host_id(host_id)
         return property_details
+    
+    async def update_property(self, user_id: str, property_data: PropertyUpdateSchema)->bool:
+        """Update a property for the given user"""
+        host_id = await self.property_repo.get_host_id(user_id)
+        
+        # Convert schema to entity for cleaner handling
+        property_entity = PropertyUpdateEntity(**property_data.model_dump(exclude={'property_id'}))
+        
+        return await self.property_repo.update_property(
+            property_id=property_data.property_id,
+            property_data=property_entity,
+            host_id=host_id
+        )
 
 
 

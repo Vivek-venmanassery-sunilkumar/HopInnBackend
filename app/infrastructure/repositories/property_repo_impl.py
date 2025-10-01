@@ -1,9 +1,9 @@
 from app.core.repositories import PropertyRepo
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity
+from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity, PropertyAddressEntity
 from app.infrastructure.database.models.onboard import Property, PropertyAddress, PropertyAmenities, PropertyImages
 from app.infrastructure.database.models.onboard import Host
-from sqlalchemy import insert, func
+from sqlalchemy import insert, func, update, delete
 from sqlalchemy.future import select
 from typing import List, Optional
 import logging
@@ -269,3 +269,121 @@ class PropertyRepoImpl(PropertyRepo):
         except Exception as e:
             print(f"Error fetching property {property_id}: {str(e)}")
             return None
+
+    async def update_property(self, property_id: str, property_data: PropertyUpdateEntity, host_id: int) -> bool:
+        """Update a property with the given data using the PropertyUpdateEntity"""
+        try:
+            property_id_int = int(property_id)
+            
+            # First, verify the property belongs to the host
+            if not await self._verify_property_ownership(property_id_int, host_id):
+                return False
+            
+            # Update main property table using entity helper method
+            await self._update_property_main_data(property_id_int, property_data)
+            
+            # Update address if provided
+            if property_data.has_address_update():
+                await self._update_property_address(property_id_int, property_data.property_address)
+            
+            # Update amenities if provided
+            if property_data.has_amenities_update():
+                await self._update_property_amenities(property_id_int, property_data.amenities)
+            
+            # Update images if provided
+            if property_data.has_images_update():
+                await self._update_property_images(property_id_int, property_data.property_images)
+            
+            await self.session.commit()
+            logger.info(f"Successfully updated property {property_id}")
+            return True
+            
+        except Exception as e:
+            await self.session.rollback()
+            logger.error(f"Error updating property {property_id}: {str(e)}")
+            return False
+
+    async def _verify_property_ownership(self, property_id: int, host_id: int) -> bool:
+        """Verify that the property belongs to the host"""
+        property_query = select(Property).where(
+            Property.id == property_id,
+            Property.host_id == host_id
+        )
+        property_result = await self.session.execute(property_query)
+        existing_property = property_result.scalar_one_or_none()
+        
+        if not existing_property:
+            logger.warning(f"Property {property_id} not found or doesn't belong to host {host_id}")
+            return False
+        return True
+
+    async def _update_property_main_data(self, property_id: int, property_data: PropertyUpdateEntity):
+        """Update the main property table fields"""
+        update_data = property_data.get_update_data()
+        
+        # Filter out nested objects that are handled separately
+        main_fields = {k: v for k, v in update_data.items() 
+                      if k not in ['property_address', 'property_images', 'amenities']}
+        
+        if main_fields:
+            property_update_query = update(Property).where(
+                Property.id == property_id
+            ).values(**main_fields)
+            await self.session.execute(property_update_query)
+
+    async def _update_property_address(self, property_id: int, address_data: PropertyAddressEntity):
+        """Update property address"""
+        address_update_data = {
+            'house_name': address_data.house_name,
+            'landmark': address_data.landmark or "",
+            'pincode': address_data.pincode,
+            'district': address_data.district,
+            'state': address_data.state,
+            'country': address_data.country
+        }
+        
+        # Handle coordinates
+        if address_data.coordinates:
+            coordinates = address_data.coordinates
+            if 'longitude' in coordinates and 'latitude' in coordinates:
+                point = f"POINT({coordinates['longitude']} {coordinates['latitude']})"
+                address_update_data['location'] = point
+        
+        address_update_query = update(PropertyAddress).where(
+            PropertyAddress.property_id == property_id
+        ).values(**address_update_data)
+        await self.session.execute(address_update_query)
+
+    async def _update_property_amenities(self, property_id: int, amenities: list):
+        """Update property amenities by replacing all existing ones"""
+        # Delete existing amenities
+        delete_amenities_query = delete(PropertyAmenities).where(
+            PropertyAmenities.property_id == property_id
+        )
+        await self.session.execute(delete_amenities_query)
+        
+        # Insert new amenities
+        for amenity in amenities:
+            amenity_insert_query = insert(PropertyAmenities).values(
+                property_id=property_id,
+                amenity=amenity
+            )
+            await self.session.execute(amenity_insert_query)
+
+    async def _update_property_images(self, property_id: int, images: list):
+        """Update property images by replacing all existing ones"""
+        # Delete existing images
+        delete_images_query = delete(PropertyImages).where(
+            PropertyImages.property_id == property_id
+        )
+        await self.session.execute(delete_images_query)
+        
+        # Insert new images
+        for img in images:
+            image_insert_query = insert(PropertyImages).values(
+                property_id=property_id,
+                image_url=img.image_url,
+                is_primary=img.is_primary,
+                public_id=img.public_id
+            )
+            await self.session.execute(image_insert_query)
