@@ -33,3 +33,9 @@ async def get_properties(
         "data": properties_data,
         "message": "Properties fetched successfully"
     }
+
+@router.put('/edit', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_host)])
+async def edit_properties(
+    request: Request,
+):
+    pass

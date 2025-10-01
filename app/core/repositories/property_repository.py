@@ -18,5 +18,3 @@ class PropertyRepo(ABC):
     @abstractmethod
     async def get_property_by_id(self, property_id: int)->Optional[PropertyOnlyDetailsEntity]:
         pass
-
-    
