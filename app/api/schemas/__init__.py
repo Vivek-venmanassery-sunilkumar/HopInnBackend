@@ -7,4 +7,3 @@ from .guide.guide import GuideOnboardSchema, GuideProfileSchema
 from .host.host import HostOnboardSchema, PropertyImageSchema, PropertyAddressSchema, HostProfileSchema, HostProfileUpdateSchema
 from .address import AddressSchema
 from .property import PropertySchema, PropertyUpdateSchema
-from .admin.user_management import UserListResponse, UserDetailsResponse, UserActionResponse, UserBasicInfo, TravellerInfo, GuideInfo, HostInfo, UserDetails
