@@ -8,3 +8,4 @@ from .onboard_repo import OnboardRepo
 from .guide_profile import GuideProfileInterface
 from .host_profile import HostProfileInterface
 from .property_repository import PropertyRepo
+from .user_management_repo_interface import UserManagementRepoInterface

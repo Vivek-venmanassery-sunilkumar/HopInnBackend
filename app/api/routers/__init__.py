@@ -7,3 +7,4 @@ from .onboarding.onboard import router as onboard_router
 from .guide.profile import router as guide_profile_router
 from .host.profile import router as host_profile_router
 from .host.property import router as property_router
+from .admin.user_management import router as admin_router

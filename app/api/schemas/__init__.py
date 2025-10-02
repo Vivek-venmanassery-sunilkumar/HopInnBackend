@@ -4,6 +4,7 @@ from .kyc import KycSchema, KycResponseSchema, KycListItemSchema, KycListRespons
 from .roles.roles import UserRolesSchema
 from .cloudinary_schema import CloudDataSchema
 from .guide.guide import GuideOnboardSchema, GuideProfileSchema
-from .host.host import HostOnboardSchema, PropertyImageSchema, PropertyAddressSchema, HostProfileSchema
+from .host.host import HostOnboardSchema, PropertyImageSchema, PropertyAddressSchema, HostProfileSchema, HostProfileUpdateSchema
 from .address import AddressSchema
 from .property import PropertySchema, PropertyUpdateSchema
+from .admin.user_management_schema import TravellerUserSchema, GuideUserSchema, HostUserSchema, UserStatusUpdateRequestSchema, UserStatusUpdateResponseSchema

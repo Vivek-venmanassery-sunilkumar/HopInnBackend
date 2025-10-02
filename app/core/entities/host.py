@@ -117,3 +117,30 @@ class HostEntity(BaseModel):
     about: str
     profession: str
     known_languages: list
+
+class HostProfileUpdateEntity(BaseModel):
+    """Entity for handling host profile updates with optional fields"""
+    about: Optional[str] = None
+    profession: Optional[str] = None
+    known_languages: Optional[List[str]] = None
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        from_attributes=True
+    )
+
+    def get_update_data(self) -> dict:
+        """Return only non-None fields for database update"""
+        return self.model_dump(exclude_none=True, by_alias=False)
+
+    def has_about_update(self) -> bool:
+        """Check if about field needs to be updated"""
+        return self.about is not None
+
+    def has_profession_update(self) -> bool:
+        """Check if profession field needs to be updated"""
+        return self.profession is not None
+
+    def has_languages_update(self) -> bool:
+        """Check if languages need to be updated"""
+        return self.known_languages is not None
