@@ -48,6 +48,9 @@ class KycUseCase:
         kyc_schemas = [
             KycListItemSchema(
                 userId = entity.user_id,
+                email = entity.email,
+                firstName = entity.first_name,
+                lastName = entity.last_name,
                 kycImageUrl = entity.kyc_image_url,
                 verificationStatus = entity.verification_status,
                 rejectionReason= entity.rejection_reason

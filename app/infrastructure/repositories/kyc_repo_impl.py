@@ -2,7 +2,7 @@ from app.core.repositories import KycRepo
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.entities import KycEntity, KycListItemEntity
 from app.core.enums import KycVerificationStatus
-from app.infrastructure.database.models.users.user import UserKyc as KycModel
+from app.infrastructure.database.models.users.user import UserKyc as KycModel, User
 from sqlalchemy.future import select
 from sqlalchemy import exists, func
 from sqlalchemy.exc import SQLAlchemyError
@@ -104,20 +104,27 @@ class KycRepoImpl(KycRepo):
     #getting the kyc data according to the verification status in a paginated manner 
     async def get_kyc_list(self, status: str, skip: int= 0, limit: int = 10)->List[KycListItemEntity]:
         result = await self.session.execute(
-            select(KycModel).where(KycModel.verification_status == status).offset(skip).limit(limit)
+            select(KycModel, User)
+            .join(User, KycModel.user_id == User.id)
+            .where(KycModel.verification_status == status)
+            .offset(skip)
+            .limit(limit)
         )
         logger.info(type(result))
 
         logger.info(f'the data inside execute: {result}')
 
-        kyc_list_items = result.scalars().all()
+        kyc_list_items = result.all()
 
         return [
             KycListItemEntity(
-                user_id=str(item.user_id),
-                kyc_image_url=item.kyc_image_url,
-                verification_status=KycVerificationStatus(item.verification_status),
-                rejection_reason=item.rejection_reason
+                user_id=str(item[0].user_id),
+                email=item[1].email,
+                first_name=item[1].first_name,
+                last_name=item[1].last_name,
+                kyc_image_url=item[0].kyc_image_url,
+                verification_status=KycVerificationStatus(item[0].verification_status),
+                rejection_reason=item[0].rejection_reason
             )
             for item in kyc_list_items
         ]
