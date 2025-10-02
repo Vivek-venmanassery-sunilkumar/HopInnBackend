@@ -10,6 +10,9 @@ class KycEntity(BaseModel):
 
 class KycListItemEntity(BaseModel):
     user_id: str
+    email: str
+    first_name: str
+    last_name: Optional[str] = None
     kyc_image_url: str
     verification_status: KycVerificationStatus
     rejection_reason: Optional[str] = None

@@ -20,6 +20,9 @@ class KycResponseSchema(BaseModel):
 
 class KycListItemSchema(BaseModel):
     userId: str
+    email: str
+    firstName: str
+    lastName: Optional[str] = None
     kycImageUrl: str
     verificationStatus: KycVerificationStatus
     rejectionReason: Optional[str] = None
