@@ -11,7 +11,7 @@ class PropertySchema(BaseModel):
     maxGuests: int = Field(..., gt=0, description="Must be greater than 0")
     bedrooms: int = Field(..., gt=0, description="Must be greater than 0")
     pricePerNight: float = Field(..., gt=0, description="Must be greater than 0")
-    amenities: list
+    amenities: List[str]
     propertyAddress: PropertyAddressSchema 
     propertyImages: List[PropertyImageSchema]
 

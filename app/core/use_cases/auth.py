@@ -98,10 +98,13 @@ class LoginUseCases:
         return user_response, tokens 
     async def _validate_user(self, email: str)->UserEntity:
         user = await self.user_repo.get_user_by_email(email)
+        logger.info(f'user status: {user.is_active}')
         if not user:
             raise ValueError("User not found")
         if user.password_hash is None and user.google_id:
             raise ValueError("This account uses Google authentication. Please sign in with Google.")
+        if not user.is_active:
+            raise ValueError("This account is banned by the admin")
         return user
     
     async def _validate_password(self, password: str, hashed_password: str)->bool:
@@ -146,7 +149,8 @@ class GoogleLoginUseCase:
 
         user = await self.user_repo.get_user_by_email(email)
         if user:
-
+            if not user.is_active:
+                raise ValueError("The user is blocked by the admin")
             if not user.google_id or user.google_id != google_id:
                 success = await self.user_repo.update_google_user_info(email, google_id, picture)
 
