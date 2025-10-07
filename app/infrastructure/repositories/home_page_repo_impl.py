@@ -5,7 +5,7 @@ from sqlalchemy.future import select
 from geoalchemy2 import functions as geo_funcs
 from app.core.entities.traveller.home_page import PropertySearchEntity, PropertySearchQueryEntity
 from app.core.repositories.traveller_home_page import TravellerHomePageRepositoryInterface
-from app.infrastructure.database.models.onboard import Property, PropertyAddress
+from app.infrastructure.database.models.onboard import Property, PropertyAddress, PropertyImages
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
         Search properties based on query parameters
         """
         try:
-            # Build base query
+            # Build base query with primary image
             base_query = select(
                 Property.id,
                 Property.property_name,
@@ -43,9 +43,15 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                 PropertyAddress.district,
                 PropertyAddress.state,
                 PropertyAddress.country,
-                func.ST_AsText(PropertyAddress.location).label('location_wkt')
+                func.ST_AsText(PropertyAddress.location).label('location_wkt'),
+                PropertyImages.image_url.label('primary_image_url')
             ).join(
                 PropertyAddress, Property.id == PropertyAddress.property_id
+            ).outerjoin(
+                PropertyImages, and_(
+                    Property.id == PropertyImages.property_id,
+                    PropertyImages.is_primary == True
+                )
             )
             
             # Apply filters only if not requesting all properties
@@ -113,7 +119,8 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                     state=prop.state,
                     country=prop.country,
                     latitude=coordinates.get('latitude'),
-                    longitude=coordinates.get('longitude')
+                    longitude=coordinates.get('longitude'),
+                    primary_image_url=prop.primary_image_url
                 )
                 result.append(entity)
             
@@ -135,6 +142,11 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
             # Build base query
             base_query = select(Property.id).join(
                 PropertyAddress, Property.id == PropertyAddress.property_id
+            ).outerjoin(
+                PropertyImages, and_(
+                    Property.id == PropertyImages.property_id,
+                    PropertyImages.is_primary == True
+                )
             )
             
             # Apply filters only if not requesting all properties

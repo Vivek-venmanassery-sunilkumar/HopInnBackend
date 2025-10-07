@@ -24,6 +24,7 @@ class PropertySearchResponseSchema(BaseModel):
     country: str
     latitude: Optional[float]
     longitude: Optional[float]
+    primaryImageUrl: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -46,7 +47,8 @@ class PropertySearchResponseSchema(BaseModel):
                 "state": "Maharashtra",
                 "country": "India",
                 "latitude": 19.0760,
-                "longitude": 72.8777
+                "longitude": 72.8777,
+                "primaryImageUrl": "https://res.cloudinary.com/example/image/upload/v1234567890/beach-house.jpg"
             }
         }
 

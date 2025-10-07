@@ -24,6 +24,7 @@ class PropertySearchEntity(BaseModel):
     country: str
     latitude: Optional[float]
     longitude: Optional[float]
+    primary_image_url: Optional[str] = None
 
     class Config:
         from_attributes = True

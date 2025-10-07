@@ -87,7 +87,8 @@ async def search_properties(
                 "state": prop.state,
                 "country": prop.country,
                 "latitude": prop.latitude,
-                "longitude": prop.longitude
+                "longitude": prop.longitude,
+                "primaryImageUrl": prop.primary_image_url
             }
             properties_response.append(property_response)
         
