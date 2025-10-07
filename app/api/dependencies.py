@@ -2,14 +2,14 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.database.session import get_db
-from app.core.repositories import UserRepository, EmailRepo, TokenRepository,TravellerProfileInterface, UserRolesPermissionsInterface, KycRepo, OnboardRepo, GuideProfileInterface, HostProfileInterface, PropertyRepo, UserManagementRepoInterface
+from app.core.repositories import UserRepository, EmailRepo, TokenRepository,TravellerProfileInterface, UserRolesPermissionsInterface, KycRepo, OnboardRepo, GuideProfileInterface, HostProfileInterface, PropertyRepo, UserManagementRepoInterface, TravellerHomePageRepositoryInterface
 from app.infrastructure.redis.redis_client import RedisClient
 from app.infrastructure.config.jwt_settings_adaptor import get_core_jwt_settings
 from app.infrastructure.config.redis_settings_adaptor import get_core_redis_settings
 from app.infrastructure.config.google_settings_adaptor import get_core_google_settings
 from app.core.entities import JWTSettingsEntity, RedisSettingsEntity, GoogleSettingsEntity
 from app.core.redis.redis_repo import RedisRepoInterface
-from app.infrastructure.repositories import TravellerProfileImpl, UserRolesPermissionsImpl, KycRepoImpl, OnboardRepoImpl, GuideProfileImpl, HostProfileImpl, SQLAlchemyUserRepository, CeleryEmailRepo, TokenRepositoryImpl, PropertyRepoImpl, UserManagementRepoImpl
+from app.infrastructure.repositories import TravellerProfileImpl, UserRolesPermissionsImpl, KycRepoImpl, OnboardRepoImpl, GuideProfileImpl, HostProfileImpl, SQLAlchemyUserRepository, CeleryEmailRepo, TokenRepositoryImpl, PropertyRepoImpl, UserManagementRepoImpl, HomePageRepositoryImpl
 
 
 '''get_user_roles_permissions is a dependecy injection function that is to be used
@@ -71,6 +71,11 @@ async def get_user_management_repo(
 )->UserManagementRepoInterface:
     return UserManagementRepoImpl(db)
 
+async def get_home_page_repository(
+        db: DbDep
+)->TravellerHomePageRepositoryInterface:
+    return HomePageRepositoryImpl(db)
+
 PropertyRepoDepo = Annotated[PropertyRepo, Depends(get_property_repository)]
 HostProfileDep = Annotated[HostProfileInterface, Depends(get_host_profile_repository)]
 GuideProfileDep = Annotated[GuideProfileInterface, Depends(get_guide_profile_repository)]
@@ -81,6 +86,7 @@ TravellerProfileDep = Annotated[TravellerProfileInterface, Depends(get_traveller
 KycRepoDep = Annotated[KycRepo, Depends(get_kyc_repo)]
 OnboardRepoDep = Annotated[OnboardRepo, Depends(get_onboard_repository)]
 UserManagementRepoDep = Annotated[UserManagementRepoInterface, Depends(get_user_management_repo)]
+HomePageRepoDep = Annotated[TravellerHomePageRepositoryInterface, Depends(get_home_page_repository)]
 
 def get_token_repository(
         jwt_settings: Annotated[JWTSettingsEntity, Depends(get_core_jwt_settings)],

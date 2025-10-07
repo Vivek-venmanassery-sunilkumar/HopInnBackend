@@ -1,5 +1,6 @@
 from .traveller.authentication import UserRegisterSchema, OtpDataSchema, EmailSchema, LoginSchema, SafeUserResponseSchema, TokenRequestSchema
 from .traveller.profile import TravellerProfileSchema, TravellerProfileUpdateSchema
+from .traveller.home_page import PropertySearchResponseSchema, PropertySearchResultSchema, PropertySearchQueryParams
 from .kyc import KycSchema, KycResponseSchema, KycListItemSchema, KycListResponseSchema, KycAcceptRequestSchema, KycRejectRequestSchema
 from .roles.roles import UserRolesSchema
 from .cloudinary_schema import CloudDataSchema
