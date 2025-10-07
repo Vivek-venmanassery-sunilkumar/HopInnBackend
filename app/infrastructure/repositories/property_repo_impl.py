@@ -22,6 +22,7 @@ class PropertyRepoImpl(PropertyRepo):
     #add property main implementation
     async def add_property(self, property_data: PropertyDetailsEntity)->str | None:
         try:
+            logger.info(f"Starting property creation for host_id: {property_data.host_id}")
             property_insert_query = insert(Property).values(
                 host_id=int(property_data.host_id),
                 max_guests = property_data.max_guests,
@@ -35,11 +36,14 @@ class PropertyRepoImpl(PropertyRepo):
             property_result = await self.session.execute(property_insert_query)
             property_id = property_result.scalar_one()
 
+            logger.info(f"Property created with property id: {property_id}")
+
             coordinates = property_data.property_address.coordinates
             point = None
             if coordinates and 'longitude' in coordinates and 'latitude' in coordinates:    
                 point = f"POINT({coordinates['longitude']} {coordinates['latitude']})"
             
+            logger.info(f"Creating address with the point: {point}")
             address_insert_query = insert(PropertyAddress).values(
                 property_id=property_id,
                 house_name=property_data.property_address.house_name,  
@@ -51,7 +55,9 @@ class PropertyRepoImpl(PropertyRepo):
                 location=point
             )
             await self.session.execute(address_insert_query)
+            logger.info("Address created successfully")
 
+            logger.info(f"Creating {len(property_data.property_images)} images")
             for img in property_data.property_images:
                 image_insert_query = insert(PropertyImages).values(
                     property_id=property_id,
@@ -61,13 +67,15 @@ class PropertyRepoImpl(PropertyRepo):
                 )
                 await self.session.execute(image_insert_query)
             
+            logger.info("Images created successfully")
+            
             for amenity in property_data.amenities:
                 amenity_insert_query = insert(PropertyAmenities).values(
                     property_id=property_id,
                     amenity=amenity
                 )
                 await self.session.execute(amenity_insert_query)
-            
+            logger.info("Amenities created successfully")
             await self.session.commit()
             return str(property_id)
         except Exception as e:
