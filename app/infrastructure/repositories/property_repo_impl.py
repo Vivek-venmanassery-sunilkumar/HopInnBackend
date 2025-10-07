@@ -1,6 +1,6 @@
 from app.core.repositories import PropertyRepo
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity, PropertyAddressEntity
+from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity, PropertyAddressEntity, PropertyDetailsWithTimestampsEntity
 from app.infrastructure.database.models.onboard import Property, PropertyAddress, PropertyAmenities, PropertyImages
 from app.infrastructure.database.models.onboard import Host
 from sqlalchemy import insert, func, update, delete
@@ -269,7 +269,10 @@ class PropertyRepoImpl(PropertyRepo):
                         'public_id': img.public_id
                     }
                     for img in images_dict.get(property_id, [])
-                ]
+                ],
+                'created_at': property_obj.created_at,
+                'updated_at': property_obj.updated_at,
+                'host_id': property_obj.host_id
             }
             
             return PropertyOnlyDetailsEntity(**property_data)
@@ -395,3 +398,66 @@ class PropertyRepoImpl(PropertyRepo):
                 public_id=img.public_id
             )
             await self.session.execute(image_insert_query)
+
+    async def get_property_details_by_id(self, property_id: int) -> Optional[PropertyDetailsWithTimestampsEntity]:
+        """Get property details by ID with timestamps and host info for the new endpoint"""
+        try:
+            # Use existing helper methods with single property ID
+            property_ids = [property_id]
+            
+            # Batch fetch related data (works with single ID too)
+            addresses_data = await self._get_addresses_by_property_ids(property_ids)
+            images_dict = await self._get_images_by_property_ids(property_ids)
+            amenities_dict = await self._get_amenities_by_property_ids(property_ids)
+            
+            # Get the main property
+            property_query = select(Property).where(Property.id == property_id)
+            property_result = await self.session.execute(property_query)
+            property_obj = property_result.scalar_one_or_none()
+            
+            if not property_obj:
+                return None
+            
+            address_info = addresses_data.get(property_id)
+            if not address_info:
+                return None
+            
+            address = address_info['address']
+            
+            property_data = {
+                'property_id': str(property_obj.id),
+                'property_name': property_obj.property_name,
+                'property_description': property_obj.property_description,
+                'property_type': property_obj.property_type,
+                'max_guests': property_obj.max_guests,
+                'bedrooms': property_obj.bedrooms,
+                'price_per_night': property_obj.price_per_night,
+                'amenities': amenities_dict.get(property_id, []),
+                'property_address': {
+                    'house_name': address.house_name,
+                    'landmark': address.landmark,
+                    'pincode': address.pincode,
+                    'district': address.district,
+                    'state': address.state,
+                    'country': address.country,
+                    'coordinates': self._extract_coordinates(address_info)
+                },
+                'property_images': [
+                    {
+                        'image_url': img.image_url,
+                        'is_primary': img.is_primary,
+                        'public_id': img.public_id
+                    }
+                    for img in images_dict.get(property_id, [])
+                ],
+                'created_at': property_obj.created_at,
+                'updated_at': property_obj.updated_at,
+                'host_id': property_obj.host_id
+            }
+            
+            entity = PropertyDetailsWithTimestampsEntity(**property_data)
+            return entity
+            
+        except Exception as e:
+            print(f"Error fetching property details {property_id}: {str(e)}")
+            return None

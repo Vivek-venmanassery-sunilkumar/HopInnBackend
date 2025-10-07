@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
+from datetime import datetime
     
 class PropertyAddressEntity(BaseModel):
     house_name: str = Field(alias="houseName")
@@ -53,6 +54,27 @@ class PropertyOnlyDetailsEntity(BaseModel):
     amenities: list
     property_address: PropertyAddressEntity = Field(alias="propertyAddress")
     property_images: List[PropertyImageEntity] = Field(alias="propertyImages")
+
+    model_config = ConfigDict(
+        populate_by_name=True,  # This allows using field names too!
+        from_attributes=True
+    )
+
+class PropertyDetailsWithTimestampsEntity(BaseModel):
+    """Enhanced entity for property details with timestamps and host info"""
+    property_id: str = Field(alias="propertyId")
+    property_name: str = Field(alias="propertyName")
+    property_description: str = Field(alias="propertyDescription")
+    property_type: str = Field(alias="propertyType")
+    max_guests: int = Field(..., gt=0, description="Must be greater than 0", alias="maxGuests")
+    bedrooms: int = Field(..., gt=0, description="Must be greater than 0")
+    price_per_night: float = Field(..., gt=0, description="Must be greater than 0", alias="pricePerNight")
+    amenities: List[str]
+    property_address: PropertyAddressEntity = Field(alias="propertyAddress")
+    property_images: List[PropertyImageEntity] = Field(alias="propertyImages")
+    created_at: datetime = Field(alias="createdAt")
+    updated_at: datetime = Field(alias="updatedAt")
+    host_id: int = Field(alias="hostId")
 
     model_config = ConfigDict(
         populate_by_name=True,  # This allows using field names too!

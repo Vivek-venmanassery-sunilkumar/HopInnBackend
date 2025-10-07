@@ -7,6 +7,6 @@ from .user_roles_and_permissions import UserRolesAndPermissionsEntity
 from .user import UserEntity, AdminCreationEntity
 from .kyc import KycEntity, KycListItemEntity
 from .guide.guide import GuideOnboardEntity
-from .host import HostOnboardEntity, PropertyAddressEntity, PropertyImageEntity, PropertyDetailsEntity, HostEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity, HostProfileUpdateEntity
+from .host import HostOnboardEntity, PropertyAddressEntity, PropertyImageEntity, PropertyDetailsEntity, HostEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity, HostProfileUpdateEntity, PropertyDetailsWithTimestampsEntity
 from .user_management_entity import TravellerUserEntity, GuideUserEntity, HostUserEntity
 

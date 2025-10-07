@@ -1,9 +1,9 @@
 from fastapi import APIRouter, status, Depends, HTTPException
 from starlette.requests import Request
-from app.api.schemas import PropertySchema, PropertyUpdateSchema
+from app.api.schemas import PropertySchema, PropertyUpdateSchema, PropertyDetailsResponseSchema
 from app.api.dependencies import PropertyRepoDepo
 from app.core.use_cases import PropertyUseCase
-from app.core.route_protection_validations.route_protection_dependencies import verify_host
+from app.core.route_protection_validations.route_protection_dependencies import verify_host, verify_traveller
 
 
 router = APIRouter(prefix='/property', tags=['property-management'])
@@ -62,4 +62,35 @@ async def edit_properties(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f'Error updating property: {str(e)}'
+        )
+
+@router.get('/get_by_id/{property_id}', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_traveller)])
+async def get_property_by_id(
+    property_id: int,
+    property_repo: PropertyRepoDepo
+) -> PropertyDetailsResponseSchema:
+    """
+    Get property details by ID for travellers
+    """
+    try:
+        property_uc = PropertyUseCase(property_repo=property_repo)
+        property_data = await property_uc.get_property_details_by_id(property_id)
+        
+        if not property_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Property not found"
+            )
+        
+        # Convert entity to response schema
+        property_dict = property_data.model_dump(by_alias=True)
+        
+        return PropertyDetailsResponseSchema(**property_dict)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f'Error fetching property: {str(e)}'
         )

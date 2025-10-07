@@ -1,7 +1,7 @@
 from app.core.repositories import PropertyRepo
 from app.api.schemas import PropertySchema, PropertyUpdateSchema
-from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity
-from typing import List
+from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity, PropertyDetailsWithTimestampsEntity
+from typing import List, Optional
 
 class PropertyUseCase:
     def __init__(
@@ -37,6 +37,14 @@ class PropertyUseCase:
             property_data=property_entity,
             host_id=host_id
         )
+    
+    async def get_property_by_id(self, property_id: int) -> Optional[PropertyOnlyDetailsEntity]:
+        """Get a property by its ID"""
+        return await self.property_repo.get_property_by_id(property_id)
+    
+    async def get_property_details_by_id(self, property_id: int) -> Optional[PropertyDetailsWithTimestampsEntity]:
+        """Get property details by ID with timestamps and host info"""
+        return await self.property_repo.get_property_details_by_id(property_id)
 
 
 
