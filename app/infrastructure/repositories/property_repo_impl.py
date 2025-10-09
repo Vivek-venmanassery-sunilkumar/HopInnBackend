@@ -31,6 +31,7 @@ class PropertyRepoImpl(PropertyRepo):
                 property_name=property_data.property_name,
                 property_type=property_data.property_type,
                 property_description=property_data.property_description,
+                child_friendly=property_data.child_friendly,
             ).returning(Property.id)
 
             property_result = await self.session.execute(property_insert_query)
@@ -186,6 +187,7 @@ class PropertyRepoImpl(PropertyRepo):
                     'property_name': property.property_name,
                     'property_description': property.property_description,
                     'property_type': property.property_type,
+                    'child_friendly': property.child_friendly,
                     'max_guests': property.max_guests,
                     'bedrooms': property.bedrooms,
                     'price_per_night': property.price_per_night,
@@ -249,6 +251,7 @@ class PropertyRepoImpl(PropertyRepo):
                 'property_name': property_obj.property_name,
                 'property_description': property_obj.property_description,
                 'property_type': property_obj.property_type,
+                'child_friendly': property_obj.child_friendly,
                 'max_guests': property_obj.max_guests,
                 'bedrooms': property_obj.bedrooms,
                 'price_per_night': property_obj.price_per_night,
@@ -429,6 +432,7 @@ class PropertyRepoImpl(PropertyRepo):
                 'property_name': property_obj.property_name,
                 'property_description': property_obj.property_description,
                 'property_type': property_obj.property_type,
+                'child_friendly': property_obj.child_friendly,
                 'max_guests': property_obj.max_guests,
                 'bedrooms': property_obj.bedrooms,
                 'price_per_night': property_obj.price_per_night,

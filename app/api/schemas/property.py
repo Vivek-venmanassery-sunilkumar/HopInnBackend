@@ -8,6 +8,7 @@ from datetime import datetime
 class PropertySchema(BaseModel):
     propertyName: str 
     propertyDescription: str 
+    childFriendly: bool
     propertyType: str 
     maxGuests: int = Field(..., gt=0, description="Must be greater than 0")
     bedrooms: int = Field(..., gt=0, description="Must be greater than 0")
@@ -20,6 +21,7 @@ class PropertyUpdateSchema(BaseModel):
     propertyName: Optional[str] = None
     propertyDescription: Optional[str] = None
     propertyType: Optional[str] = None
+    childFriendly: Optional[bool] = None
     maxGuests: Optional[int] = Field(None, gt=0, description="Must be greater than 0")
     bedrooms: Optional[int] = Field(None, gt=0, description="Must be greater than 0")
     pricePerNight: Optional[float] = Field(None, gt=0, description="Must be greater than 0")

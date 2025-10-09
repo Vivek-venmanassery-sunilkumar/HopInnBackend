@@ -9,6 +9,7 @@ class PropertySearchEntity(BaseModel):
     id: int
     property_name: str
     property_description: str
+    child_friendly: bool
     max_guests: int
     bedrooms: int
     price_per_night: Decimal

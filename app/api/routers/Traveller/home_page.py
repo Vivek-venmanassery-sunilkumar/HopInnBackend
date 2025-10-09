@@ -73,6 +73,7 @@ async def search_properties(
                 "id": prop.id,
                 "propertyName": prop.property_name,
                 "propertyDescription": prop.property_description,
+                "childFriendly": prop.child_friendly,
                 "maxGuests": prop.max_guests,
                 "bedrooms": prop.bedrooms,
                 "pricePerNight": prop.price_per_night,

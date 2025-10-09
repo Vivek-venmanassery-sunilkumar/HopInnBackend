@@ -51,6 +51,7 @@ class Property(Base):
     host_id = Column(Integer, ForeignKey('host.id', ondelete='CASCADE'), nullable=False)
     property_name = Column(String(255), nullable=False)
     property_description = Column(TEXT, nullable=False)
+    child_friendly = Column(Boolean, default=False, nullable=False)
     max_guests = Column(Integer, nullable=False)
     bedrooms = Column(Integer, nullable=False)
     price_per_night = Column(Numeric(10,2), nullable=False)

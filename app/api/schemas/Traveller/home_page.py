@@ -9,6 +9,7 @@ class PropertySearchResponseSchema(BaseModel):
     id: int
     propertyName: str
     propertyDescription: str
+    childFriendly: bool
     maxGuests: int
     bedrooms: int
     pricePerNight: Decimal
