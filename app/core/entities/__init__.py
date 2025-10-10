@@ -1,5 +1,5 @@
 from .traveller.profile import TravellerUpdateProfileEntity
-from .traveller.home_page import PropertySearchEntity, PropertySearchQueryEntity, PropertySearchResultEntity
+from .traveller.home_page import PropertySearchEntity, PropertySearchQueryEntity, PropertySearchResultEntity, GuideSearchEntity, GuideSearchQueryEntity, GuideSearchResultEntity
 from .settings.jwt_settings import JWTSettingsEntity
 from .settings.redis_settings import RedisSettingsEntity
 from .settings.google_settings import GoogleSettingsEntity

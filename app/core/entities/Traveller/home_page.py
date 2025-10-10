@@ -56,3 +56,54 @@ class PropertySearchResultEntity(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class GuideSearchEntity(BaseModel):
+    """Entity for guide search results"""
+    id: int
+    user_id: int
+    bio: str
+    profession: str
+    expertise: str
+    hourly_rate: str
+    house_name: str
+    landmark: Optional[str]
+    pincode: str
+    district: str
+    state: str
+    country: str
+    latitude: Optional[float]
+    longitude: Optional[float]
+    created_at: datetime
+    updated_at: datetime
+    first_name: str
+    last_name: Optional[str]
+    profile_image: Optional[str]
+    known_languages: List[str] = []
+
+    class Config:
+        from_attributes = True
+
+
+class GuideSearchQueryEntity(BaseModel):
+    """Entity for guide search query parameters"""
+    destination: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    all: bool = False  # New parameter to get all guides
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=10, ge=1, le=100)
+
+    class Config:
+        from_attributes = True
+
+
+class GuideSearchResultEntity(BaseModel):
+    """Entity for guide search results response"""
+    guides: List[GuideSearchEntity]
+    total_count: int
+    page: int
+    page_size: int
+
+    class Config:
+        from_attributes = True

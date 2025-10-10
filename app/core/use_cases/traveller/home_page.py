@@ -1,5 +1,5 @@
 from typing import List
-from app.core.entities.traveller.home_page import PropertySearchEntity, PropertySearchQueryEntity, PropertySearchResultEntity
+from app.core.entities.traveller.home_page import PropertySearchEntity, PropertySearchQueryEntity, PropertySearchResultEntity, GuideSearchEntity, GuideSearchQueryEntity, GuideSearchResultEntity
 from app.core.repositories.traveller_home_page import TravellerHomePageRepositoryInterface
 import logging
 
@@ -86,4 +86,75 @@ class TravellerHomePageUseCase:
             
         except Exception as e:
             logger.error(f"Error validating search query: {str(e)}")
+            return False
+
+    async def search_guides(
+        self, 
+        query: GuideSearchQueryEntity
+    ) -> GuideSearchResultEntity:
+        """
+        Search guides based on query parameters
+        
+        Args:
+            query: Guide search query parameters (includes pagination)
+            
+        Returns:
+            GuideSearchResultEntity with search results
+        """
+        try:
+            logger.info(f"Searching guides with query: {query}")
+            
+            # Get guides from repository
+            guides = await self.repository.search_guides(query)
+            
+            # Get total count for pagination
+            total_count = await self.repository.get_guides_count(query)
+            
+            # Create result entity
+            result = GuideSearchResultEntity(
+                guides=guides,
+                total_count=total_count,
+                page=query.page,
+                page_size=query.page_size
+            )
+            
+            logger.info(f"Found {len(guides)} guides out of {total_count} total")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error searching guides: {str(e)}")
+            raise
+
+    def validate_guide_search_query(self, query: GuideSearchQueryEntity) -> bool:
+        """
+        Validate guide search query parameters
+        
+        Args:
+            query: Guide search query parameters
+            
+        Returns:
+            True if valid, False otherwise
+        """
+        try:
+            # If 'all' is True, only validate pagination parameters
+            if query.all:
+                logger.info("Validating 'all' guides query")
+                return True
+            
+            # For filtered search, validate required parameters
+            # Check if destination is provided
+            if not query.destination or not query.destination.strip():
+                logger.warning("Destination is required for guide search")
+                return False
+            
+            # Check if coordinates are valid when provided
+            if query.latitude is not None and query.longitude is not None:
+                if not (-90 <= query.latitude <= 90) or not (-180 <= query.longitude <= 180):
+                    logger.warning("Invalid latitude or longitude coordinates")
+                    return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error validating guide search query: {str(e)}")
             return False

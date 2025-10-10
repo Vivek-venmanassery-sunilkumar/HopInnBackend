@@ -129,3 +129,126 @@ class PropertySearchQueryParams(BaseModel):
             raise ValueError("Destination is required when all=False")
         if self.guests is None or self.guests <= 0:
             raise ValueError("Guests must be a positive integer when all=False")
+
+
+class GuideSearchResponseSchema(BaseModel):
+    """Schema for individual guide in search results"""
+    id: int
+    userId: int
+    bio: str
+    profession: str
+    expertise: str
+    hourlyRate: str
+    houseName: str
+    landmark: Optional[str]
+    pincode: str
+    district: str
+    state: str
+    country: str
+    latitude: Optional[float]
+    longitude: Optional[float]
+    createdAt: datetime
+    updatedAt: datetime
+    firstName: str
+    lastName: Optional[str]
+    profileImage: Optional[str]
+    knownLanguages: List[str] = []
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "userId": 1,
+                "bio": "Experienced local guide with 5 years of experience",
+                "profession": "Tour Guide",
+                "expertise": "Historical sites, Food tours",
+                "hourlyRate": "25.00",
+                "houseName": "Guide House",
+                "landmark": "Near City Center",
+                "pincode": "400001",
+                "district": "Mumbai",
+                "state": "Maharashtra",
+                "country": "India",
+                "latitude": 19.0760,
+                "longitude": 72.8777,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "updatedAt": "2024-01-01T00:00:00Z",
+                "firstName": "John",
+                "lastName": "Doe",
+                "profileImage": "https://res.cloudinary.com/example/image/upload/v1234567890/profile.jpg",
+                "knownLanguages": ["English", "Hindi", "Marathi"]
+            }
+        }
+
+
+class GuideSearchResultSchema(BaseModel):
+    """Schema for guide search results response"""
+    guides: List[GuideSearchResponseSchema]
+    totalCount: int
+    page: int
+    pageSize: int
+    message: str = "Guides found successfully"
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "guides": [],
+                "totalCount": 0,
+                "page": 1,
+                "pageSize": 10,
+                "message": "Guides found successfully"
+            }
+        }
+
+
+class GuideSearchQueryParams(BaseModel):
+    """Schema for guide search query parameters from URL"""
+    destination: Optional[str] = Field(None, description="Destination for search")
+    latitude: Optional[Union[str, float]] = Field(None, description="Latitude coordinate")
+    longitude: Optional[Union[str, float]] = Field(None, description="Longitude coordinate")
+    all: bool = Field(False, description="Get all guides without filtering")
+    page: int = Field(1, ge=1, description="Page number for pagination")
+    pageSize: int = Field(10, ge=1, le=100, description="Number of items per page")
+
+    @field_validator('latitude', 'longitude', mode='before')
+    @classmethod
+    def validate_coordinates(cls, v):
+        """Convert empty strings to None for latitude and longitude"""
+        if v == "" or v is None:
+            return None
+        try:
+            # Try to convert to float
+            float_val = float(v)
+            return float_val
+        except (ValueError, TypeError):
+            return None
+    
+    @field_validator('latitude')
+    @classmethod
+    def validate_latitude_range(cls, v):
+        """Validate latitude range if not None"""
+        if v is not None and isinstance(v, (int, float)) and (v < -90 or v > 90):
+            raise ValueError("Latitude must be between -90 and 90")
+        return v
+    
+    @field_validator('longitude')
+    @classmethod
+    def validate_longitude_range(cls, v):
+        """Validate longitude range if not None"""
+        if v is not None and isinstance(v, (int, float)) and (v < -180 or v > 180):
+            raise ValueError("Longitude must be between -180 and 180")
+        return v
+
+    class Config:
+        from_attributes = True
+
+    def model_post_init(self, __context) -> None:
+        """Custom validation after model initialization"""
+        # If all=True, destination is not required
+        if self.all:
+            return
+        
+        # If all=False, destination is required
+        if not self.destination or not self.destination.strip():
+            raise ValueError("Destination is required when all=False")

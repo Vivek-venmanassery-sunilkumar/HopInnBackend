@@ -3,9 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, and_, or_, func
 from sqlalchemy.future import select
 from geoalchemy2 import functions as geo_funcs
-from app.core.entities.traveller.home_page import PropertySearchEntity, PropertySearchQueryEntity
+from app.core.entities.traveller.home_page import PropertySearchEntity, PropertySearchQueryEntity, GuideSearchEntity, GuideSearchQueryEntity
 from app.core.repositories.traveller_home_page import TravellerHomePageRepositoryInterface
-from app.infrastructure.database.models.onboard import Property, PropertyAddress, PropertyImages
+from app.infrastructure.database.models.onboard import Property, PropertyAddress, PropertyImages, Guide, Languages
+from app.infrastructure.database.models.users.user import User
 import logging
 
 logger = logging.getLogger(__name__)
@@ -254,3 +255,172 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                 logger.warning(f"Error parsing WKT coordinates: {e}")
         
         return coordinates
+
+    async def search_guides(
+        self, 
+        query: GuideSearchQueryEntity
+    ) -> List[GuideSearchEntity]:
+        """
+        Search guides based on query parameters
+        """
+        try:
+            # Build base query with user details and languages
+            base_query = select(
+                Guide.id,
+                Guide.user_id,
+                Guide.bio,
+                Guide.profession,
+                Guide.expertise,
+                Guide.hourly_rate,
+                Guide.house_name,
+                Guide.landmark,
+                Guide.pincode,
+                Guide.district,
+                Guide.state,
+                Guide.country,
+                func.ST_AsText(Guide.location).label('location_wkt'),
+                Guide.created_at,
+                Guide.updated_at,
+                User.first_name,
+                User.last_name,
+                User.profile_image
+            ).join(
+                User, Guide.user_id == User.id
+            ).where(
+                Guide.is_blocked == False  # Only get non-blocked guides
+            )
+            
+            # Apply filters only if not requesting all guides
+            if not query.all:
+                filters = []
+                
+                # Parse destination to extract location hierarchy (only if destination is provided)
+                if query.destination:
+                    location_hierarchy = self.parse_destination_hierarchy(query.destination)
+                    
+                    # Filter by location hierarchy if available
+                    if location_hierarchy.get('district'):
+                        filters.append(Guide.district.ilike(f"%{location_hierarchy['district']}%"))
+                    elif location_hierarchy.get('state'):
+                        filters.append(Guide.state.ilike(f"%{location_hierarchy['state']}%"))
+                    elif location_hierarchy.get('country'):
+                        filters.append(Guide.country.ilike(f"%{location_hierarchy['country']}%"))
+                
+                # Apply geographic search if coordinates are provided
+                if query.latitude is not None and query.longitude is not None:
+                    # Convert coordinates to geography point
+                    search_point = self.convert_lat_lng_to_geography(query.latitude, query.longitude)
+                    
+                    # Add distance-based search (within 50km radius)
+                    distance_filter = text(
+                        f"ST_DWithin(guide.location, ST_GeogFromText('{search_point}'), 50000)"
+                    )
+                    filters.append(distance_filter)
+                
+                # Apply all filters
+                if filters:
+                    base_query = base_query.filter(and_(*filters))
+            
+            # Add pagination
+            offset = (query.page - 1) * query.page_size
+            paginated_query = base_query.offset(offset).limit(query.page_size)
+            db_result = await self.db.execute(paginated_query)
+            guides = db_result.all()
+            
+            # Convert to entities
+            result = []
+            for guide in guides:
+                # Extract coordinates from WKT string
+                coordinates = self._extract_coordinates_from_wkt(guide.location_wkt)
+                
+                # Get languages for this guide
+                languages_query = select(Languages.language).where(Languages.user_id == guide.user_id)
+                languages_result = await self.db.execute(languages_query)
+                known_languages = [lang.language for lang in languages_result.all()]
+                
+                entity = GuideSearchEntity(
+                    id=guide.id,
+                    user_id=guide.user_id,
+                    bio=guide.bio,
+                    profession=guide.profession,
+                    expertise=guide.expertise,
+                    hourly_rate=guide.hourly_rate,
+                    house_name=guide.house_name,
+                    landmark=guide.landmark,
+                    pincode=guide.pincode,
+                    district=guide.district,
+                    state=guide.state,
+                    country=guide.country,
+                    latitude=coordinates.get('latitude'),
+                    longitude=coordinates.get('longitude'),
+                    created_at=guide.created_at,
+                    updated_at=guide.updated_at,
+                    first_name=guide.first_name,
+                    last_name=guide.last_name,
+                    profile_image=guide.profile_image,
+                    known_languages=known_languages
+                )
+                result.append(entity)
+            
+            logger.info(f"Found {len(result)} guides matching search criteria")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error searching guides: {str(e)}")
+            raise
+
+    async def get_guides_count(
+        self, 
+        query: GuideSearchQueryEntity
+    ) -> int:
+        """
+        Get total count of guides matching search criteria
+        """
+        try:
+            # Build base query
+            base_query = select(Guide.id).join(
+                User, Guide.user_id == User.id
+            ).where(
+                Guide.is_blocked == False  # Only count non-blocked guides
+            )
+            
+            # Apply filters only if not requesting all guides
+            if not query.all:
+                filters = []
+                
+                # Parse destination to extract location hierarchy (only if destination is provided)
+                if query.destination:
+                    location_hierarchy = self.parse_destination_hierarchy(query.destination)
+                    
+                    # Filter by location hierarchy if available
+                    if location_hierarchy.get('district'):
+                        filters.append(Guide.district.ilike(f"%{location_hierarchy['district']}%"))
+                    elif location_hierarchy.get('state'):
+                        filters.append(Guide.state.ilike(f"%{location_hierarchy['state']}%"))
+                    elif location_hierarchy.get('country'):
+                        filters.append(Guide.country.ilike(f"%{location_hierarchy['country']}%"))
+                
+                # Apply geographic search if coordinates are provided
+                if query.latitude is not None and query.longitude is not None:
+                    # Convert coordinates to geography point
+                    search_point = self.convert_lat_lng_to_geography(query.latitude, query.longitude)
+                    
+                    # Add distance-based search (within 50km radius)
+                    distance_filter = text(
+                        f"ST_DWithin(guide.location, ST_GeogFromText('{search_point}'), 50000)"
+                    )
+                    filters.append(distance_filter)
+                
+                # Apply all filters and count
+                if filters:
+                    base_query = base_query.filter(and_(*filters))
+            
+            # Execute count query
+            count_result = await self.db.execute(select(func.count()).select_from(base_query.subquery()))
+            count = count_result.scalar()
+            logger.info(f"Total guides matching search criteria: {count}")
+            return count
+            
+        except Exception as e:
+            logger.error(f"Error getting guides count: {str(e)}")
+            raise

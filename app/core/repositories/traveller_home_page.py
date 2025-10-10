@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from app.core.entities.traveller.home_page import PropertySearchEntity, PropertySearchQueryEntity
+from app.core.entities.traveller.home_page import PropertySearchEntity, PropertySearchQueryEntity, GuideSearchEntity, GuideSearchQueryEntity
 
 
 class TravellerHomePageRepositoryInterface(ABC):
@@ -62,5 +62,37 @@ class TravellerHomePageRepositoryInterface(ABC):
             
         Returns:
             Dictionary with parsed location components
+        """
+        pass
+
+    @abstractmethod
+    async def search_guides(
+        self, 
+        query: GuideSearchQueryEntity
+    ) -> List[GuideSearchEntity]:
+        """
+        Search guides based on query parameters
+        
+        Args:
+            query: Guide search query parameters (includes pagination)
+            
+        Returns:
+            List of GuideSearchEntity matching the search criteria
+        """
+        pass
+
+    @abstractmethod
+    async def get_guides_count(
+        self, 
+        query: GuideSearchQueryEntity
+    ) -> int:
+        """
+        Get total count of guides matching search criteria
+        
+        Args:
+            query: Guide search query parameters
+            
+        Returns:
+            Total count of matching guides
         """
         pass
