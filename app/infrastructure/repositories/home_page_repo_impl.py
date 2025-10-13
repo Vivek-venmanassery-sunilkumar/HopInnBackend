@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, and_, or_, func
 from sqlalchemy.future import select
@@ -23,10 +23,12 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
         query: PropertySearchQueryEntity
     ) -> List[PropertySearchEntity]:
         """
-        Search properties based on query parameters
+        Search properties based on query parameters with geographic sorting and child-friendly prioritization
         """
         try:
-            # Build base query with primary image
+            logger.info(f"Starting property search with query: all={query.all}, children_onboard={query.children_onboard}")
+            
+            # Build base query with primary image and distance calculation
             base_query = select(
                 Property.id,
                 Property.property_name,
@@ -56,21 +58,9 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                 )
             )
             
-            # Apply filters only if not requesting all properties
+            # Apply filters and sorting
             if not query.all:
                 filters = []
-                
-                # Parse destination to extract location hierarchy (only if destination is provided)
-                if query.destination:
-                    location_hierarchy = self.parse_destination_hierarchy(query.destination)
-                    
-                    # Filter by location hierarchy if available
-                    if location_hierarchy.get('district'):
-                        filters.append(PropertyAddress.district.ilike(f"%{location_hierarchy['district']}%"))
-                    elif location_hierarchy.get('state'):
-                        filters.append(PropertyAddress.state.ilike(f"%{location_hierarchy['state']}%"))
-                    elif location_hierarchy.get('country'):
-                        filters.append(PropertyAddress.country.ilike(f"%{location_hierarchy['country']}%"))
                 
                 # Filter by guest capacity (only if guests is provided)
                 if query.guests is not None:
@@ -81,21 +71,70 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                     # Convert coordinates to geography point
                     search_point = self.convert_lat_lng_to_geography(query.latitude, query.longitude)
                     
-                    # Add distance-based search (within 50km radius)
-                    distance_filter = text(
-                        f"ST_DWithin(property_address.location, ST_GeogFromText('{search_point}'), 50000)"
+                    # Add distance calculation for sorting using proper column reference
+                    distance_calc = func.ST_Distance(
+                        PropertyAddress.location,
+                        func.ST_GeogFromText(search_point)
+                    )
+                    base_query = base_query.add_columns(distance_calc.label('distance'))
+                    
+                    # Add distance-based search (within 100km radius for better coverage)
+                    distance_filter = func.ST_DWithin(
+                        PropertyAddress.location,
+                        func.ST_GeogFromText(search_point),
+                        100000
                     )
                     filters.append(distance_filter)
+                else:
+                    # If no coordinates, add a default distance of 0 for sorting
+                    base_query = base_query.add_columns(func.cast(0, func.Float).label('distance'))
                 
                 # Apply all filters
                 if filters:
                     base_query = base_query.filter(and_(*filters))
+                
+                # Apply sorting based on children_onboard and geographic proximity
+                if query.children_onboard is True:
+                    # When children are onboard, prioritize child-friendly properties
+                    # Sort by: child_friendly DESC, then by distance ASC
+                    if query.latitude is not None and query.longitude is not None:
+                        base_query = base_query.order_by(
+                            Property.child_friendly.desc(),
+                            distance_calc.asc()
+                        )
+                    else:
+                        base_query = base_query.order_by(
+                            Property.child_friendly.desc(),
+                            Property.created_at.desc()
+                        )
+                else:
+                    # When no children, sort primarily by distance
+                    # Sort by: distance ASC, then by child_friendly DESC
+                    if query.latitude is not None and query.longitude is not None:
+                        base_query = base_query.order_by(
+                            distance_calc.asc(),
+                            Property.child_friendly.desc()
+                        )
+                    else:
+                        base_query = base_query.order_by(
+                            Property.child_friendly.desc(),
+                            Property.created_at.desc()
+                        )
+            else:
+                # For 'all' query, just sort by child_friendly and created_at
+                logger.info("Processing 'all' query - no filters applied")
+                base_query = base_query.order_by(
+                    Property.child_friendly.desc(),
+                    Property.created_at.desc()
+                )
             
             # Add pagination
             offset = (query.page - 1) * query.page_size
             paginated_query = base_query.offset(offset).limit(query.page_size)
+            logger.info(f"Executing query with pagination: offset={offset}, limit={query.page_size}")
             db_result = await self.db.execute(paginated_query)
             properties = db_result.all()
+            logger.info(f"Query executed successfully, found {len(properties)} properties")
             
             # Convert to entities
             result = []
@@ -152,21 +191,9 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                 )
             )
             
-            # Apply filters only if not requesting all properties
+            # Apply filters (same logic as search_properties but without sorting)
             if not query.all:
                 filters = []
-                
-                # Parse destination to extract location hierarchy (only if destination is provided)
-                if query.destination:
-                    location_hierarchy = self.parse_destination_hierarchy(query.destination)
-                    
-                    # Filter by location hierarchy if available
-                    if location_hierarchy.get('district'):
-                        filters.append(PropertyAddress.district.ilike(f"%{location_hierarchy['district']}%"))
-                    elif location_hierarchy.get('state'):
-                        filters.append(PropertyAddress.state.ilike(f"%{location_hierarchy['state']}%"))
-                    elif location_hierarchy.get('country'):
-                        filters.append(PropertyAddress.country.ilike(f"%{location_hierarchy['country']}%"))
                 
                 # Filter by guest capacity (only if guests is provided)
                 if query.guests is not None:
@@ -177,9 +204,11 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                     # Convert coordinates to geography point
                     search_point = self.convert_lat_lng_to_geography(query.latitude, query.longitude)
                     
-                    # Add distance-based search (within 50km radius)
-                    distance_filter = text(
-                        f"ST_DWithin(property_address.location, ST_GeogFromText('{search_point}'), 50000)"
+                    # Add distance-based search (within 100km radius for better coverage)
+                    distance_filter = func.ST_DWithin(
+                        PropertyAddress.location,
+                        func.ST_GeogFromText(search_point),
+                        100000
                     )
                     filters.append(distance_filter)
                 
@@ -311,9 +340,11 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                     # Convert coordinates to geography point
                     search_point = self.convert_lat_lng_to_geography(query.latitude, query.longitude)
                     
-                    # Add distance-based search (within 50km radius)
-                    distance_filter = text(
-                        f"ST_DWithin(guide.location, ST_GeogFromText('{search_point}'), 50000)"
+                    # Add distance-based search (within 100km radius for better coverage)
+                    distance_filter = func.ST_DWithin(
+                        Guide.location,
+                        func.ST_GeogFromText(search_point),
+                        100000
                     )
                     filters.append(distance_filter)
                 
@@ -405,9 +436,11 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                     # Convert coordinates to geography point
                     search_point = self.convert_lat_lng_to_geography(query.latitude, query.longitude)
                     
-                    # Add distance-based search (within 50km radius)
-                    distance_filter = text(
-                        f"ST_DWithin(guide.location, ST_GeogFromText('{search_point}'), 50000)"
+                    # Add distance-based search (within 100km radius for better coverage)
+                    distance_filter = func.ST_DWithin(
+                        Guide.location,
+                        func.ST_GeogFromText(search_point),
+                        100000
                     )
                     filters.append(distance_filter)
                 

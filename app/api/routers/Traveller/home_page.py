@@ -48,6 +48,7 @@ async def search_properties(
             to_date=query_params.toDate,
             latitude=latitude,
             longitude=longitude,
+            children_onboard=query_params.childrenOnboard,
             all=query_params.all,
             page=query_params.page,
             page_size=query_params.pageSize
@@ -145,6 +146,7 @@ async def search_guides(
             destination=destination,
             latitude=latitude,
             longitude=longitude,
+            children_onboard=query_params.childrenOnboard,
             all=query_params.all,
             page=query_params.page,
             page_size=query_params.pageSize

@@ -39,6 +39,7 @@ class PropertySearchQueryEntity(BaseModel):
     to_date: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    children_onboard: Optional[bool] = None  # New parameter for child-friendly prioritization
     all: bool = False  # New parameter to get all properties
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=10, ge=1, le=100)
@@ -90,6 +91,7 @@ class GuideSearchQueryEntity(BaseModel):
     destination: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    children_onboard: Optional[bool] = None  # New parameter for child-friendly prioritization
     all: bool = False  # New parameter to get all guides
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=10, ge=1, le=100)
