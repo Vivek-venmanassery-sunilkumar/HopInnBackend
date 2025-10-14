@@ -59,3 +59,18 @@ class TokenRepositoryImpl(TokenRepository):
         except JWTError:
             return None
 
+    def verify_refresh_token(self, token: str)->Optional[dict]:
+        try:
+            payload = jwt.decode(token, self.jwt_settings.SECRET_KEY, algorithms=self.jwt_settings.ALGORITHM)
+
+            exp = payload.get('exp')
+            if exp and datetime.utcfromtimestamp(exp) < datetime.utcnow():
+                return None
+            
+            if payload.get('type') != 'refresh':
+                return None
+            return payload
+        except JWTError:
+            return None
+            
+                

@@ -101,22 +101,30 @@ class SQLAlchemyUserRepository(UserRepository):
 
     async def get_user_roles(self, user_id: str)->UserRolesSchema:
         query = (
-            select(UserModel, Guide.is_blocked.label('guide_is_blocked'), Host.is_blocked.label('host_is_blocked'))
+            select(UserModel, Guide.is_blocked.label('guide_is_blocked'), Guide.id.label('guide_id'), Host.is_blocked.label('host_is_blocked'), Host.id.label('host_id'))
             .outerjoin(Guide, Guide.user_id == UserModel.id)
             .outerjoin(Host, Host.user_id == UserModel.id)
             .where(UserModel.id == int(user_id))
         )
         result = await self.session.execute(query)
         row = result.first()
-        db_user, guide_is_blocked, host_is_blocked = row 
+        db_user, guide_is_blocked, guide_id, host_is_blocked, host_id = row 
+
+        # Combine first_name and last_name to create full name
+        full_name = db_user.first_name
+        if db_user.last_name:
+            full_name = f"{db_user.first_name} {db_user.last_name}"
 
         return UserRolesSchema(
             id=str(db_user.id),
+            name=full_name,
             isTraveller=db_user.is_traveller,
             isGuide=db_user.is_guide,
             isGuideBlocked=guide_is_blocked if guide_is_blocked is not None else False,
+            guideId=guide_id,
             isHost = db_user.is_host,
             isHostBlocked=host_is_blocked if host_is_blocked is not None else False,
+            hostId=host_id,
             isAdmin=db_user.is_admin,
             isActive=db_user.is_active,
         )

@@ -4,6 +4,7 @@ from .celery_email_repo_impl import CeleryEmailRepo
 from .token_repository_impl import TokenRepositoryImpl
 from .user_permission_roles_impl import UserRolesPermissionsImpl
 from .traveller_profile_impl import TravellerProfileImpl
+from .home_page_repo_impl import HomePageRepositoryImpl
 from .kyc_repo_impl import KycRepoImpl
 from .onboard_repo_impl import OnboardRepoImpl
 from .guide_profile_impl import GuideProfileImpl

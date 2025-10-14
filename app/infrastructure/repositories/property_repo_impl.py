@@ -1,6 +1,6 @@
 from app.core.repositories import PropertyRepo
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity, PropertyAddressEntity
+from app.core.entities import PropertyDetailsEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity, PropertyAddressEntity, PropertyDetailsWithTimestampsEntity
 from app.infrastructure.database.models.onboard import Property, PropertyAddress, PropertyAmenities, PropertyImages
 from app.infrastructure.database.models.onboard import Host
 from sqlalchemy import insert, func, update, delete
@@ -22,6 +22,7 @@ class PropertyRepoImpl(PropertyRepo):
     #add property main implementation
     async def add_property(self, property_data: PropertyDetailsEntity)->str | None:
         try:
+            logger.info(f"Starting property creation for host_id: {property_data.host_id}")
             property_insert_query = insert(Property).values(
                 host_id=int(property_data.host_id),
                 max_guests = property_data.max_guests,
@@ -30,16 +31,20 @@ class PropertyRepoImpl(PropertyRepo):
                 property_name=property_data.property_name,
                 property_type=property_data.property_type,
                 property_description=property_data.property_description,
+                child_friendly=property_data.child_friendly,
             ).returning(Property.id)
 
             property_result = await self.session.execute(property_insert_query)
             property_id = property_result.scalar_one()
+
+            logger.info(f"Property created with property id: {property_id}")
 
             coordinates = property_data.property_address.coordinates
             point = None
             if coordinates and 'longitude' in coordinates and 'latitude' in coordinates:    
                 point = f"POINT({coordinates['longitude']} {coordinates['latitude']})"
             
+            logger.info(f"Creating address with the point: {point}")
             address_insert_query = insert(PropertyAddress).values(
                 property_id=property_id,
                 house_name=property_data.property_address.house_name,  
@@ -51,7 +56,9 @@ class PropertyRepoImpl(PropertyRepo):
                 location=point
             )
             await self.session.execute(address_insert_query)
+            logger.info("Address created successfully")
 
+            logger.info(f"Creating {len(property_data.property_images)} images")
             for img in property_data.property_images:
                 image_insert_query = insert(PropertyImages).values(
                     property_id=property_id,
@@ -61,13 +68,15 @@ class PropertyRepoImpl(PropertyRepo):
                 )
                 await self.session.execute(image_insert_query)
             
+            logger.info("Images created successfully")
+            
             for amenity in property_data.amenities:
                 amenity_insert_query = insert(PropertyAmenities).values(
                     property_id=property_id,
                     amenity=amenity
                 )
                 await self.session.execute(amenity_insert_query)
-            
+            logger.info("Amenities created successfully")
             await self.session.commit()
             return str(property_id)
         except Exception as e:
@@ -178,6 +187,7 @@ class PropertyRepoImpl(PropertyRepo):
                     'property_name': property.property_name,
                     'property_description': property.property_description,
                     'property_type': property.property_type,
+                    'child_friendly': property.child_friendly,
                     'max_guests': property.max_guests,
                     'bedrooms': property.bedrooms,
                     'price_per_night': property.price_per_night,
@@ -241,6 +251,7 @@ class PropertyRepoImpl(PropertyRepo):
                 'property_name': property_obj.property_name,
                 'property_description': property_obj.property_description,
                 'property_type': property_obj.property_type,
+                'child_friendly': property_obj.child_friendly,
                 'max_guests': property_obj.max_guests,
                 'bedrooms': property_obj.bedrooms,
                 'price_per_night': property_obj.price_per_night,
@@ -261,7 +272,10 @@ class PropertyRepoImpl(PropertyRepo):
                         'public_id': img.public_id
                     }
                     for img in images_dict.get(property_id, [])
-                ]
+                ],
+                'created_at': property_obj.created_at,
+                'updated_at': property_obj.updated_at,
+                'host_id': property_obj.host_id
             }
             
             return PropertyOnlyDetailsEntity(**property_data)
@@ -387,3 +401,67 @@ class PropertyRepoImpl(PropertyRepo):
                 public_id=img.public_id
             )
             await self.session.execute(image_insert_query)
+
+    async def get_property_details_by_id(self, property_id: int) -> Optional[PropertyDetailsWithTimestampsEntity]:
+        """Get property details by ID with timestamps and host info for the new endpoint"""
+        try:
+            # Use existing helper methods with single property ID
+            property_ids = [property_id]
+            
+            # Batch fetch related data (works with single ID too)
+            addresses_data = await self._get_addresses_by_property_ids(property_ids)
+            images_dict = await self._get_images_by_property_ids(property_ids)
+            amenities_dict = await self._get_amenities_by_property_ids(property_ids)
+            
+            # Get the main property
+            property_query = select(Property).where(Property.id == property_id)
+            property_result = await self.session.execute(property_query)
+            property_obj = property_result.scalar_one_or_none()
+            
+            if not property_obj:
+                return None
+            
+            address_info = addresses_data.get(property_id)
+            if not address_info:
+                return None
+            
+            address = address_info['address']
+            
+            property_data = {
+                'property_id': str(property_obj.id),
+                'property_name': property_obj.property_name,
+                'property_description': property_obj.property_description,
+                'property_type': property_obj.property_type,
+                'child_friendly': property_obj.child_friendly,
+                'max_guests': property_obj.max_guests,
+                'bedrooms': property_obj.bedrooms,
+                'price_per_night': property_obj.price_per_night,
+                'amenities': amenities_dict.get(property_id, []),
+                'property_address': {
+                    'house_name': address.house_name,
+                    'landmark': address.landmark,
+                    'pincode': address.pincode,
+                    'district': address.district,
+                    'state': address.state,
+                    'country': address.country,
+                    'coordinates': self._extract_coordinates(address_info)
+                },
+                'property_images': [
+                    {
+                        'image_url': img.image_url,
+                        'is_primary': img.is_primary,
+                        'public_id': img.public_id
+                    }
+                    for img in images_dict.get(property_id, [])
+                ],
+                'created_at': property_obj.created_at,
+                'updated_at': property_obj.updated_at,
+                'host_id': property_obj.host_id
+            }
+            
+            entity = PropertyDetailsWithTimestampsEntity(**property_data)
+            return entity
+            
+        except Exception as e:
+            print(f"Error fetching property details {property_id}: {str(e)}")
+            return None

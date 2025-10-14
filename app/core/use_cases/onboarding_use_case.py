@@ -60,6 +60,7 @@ class OnBoardingUseCase:
             )
             
             host_id = await self.onboard_repo.add_host(data = host_data, user_id = user_id)
+            logger.info(f"The host id that is created right now is: {host_id}")
             if not host_id:
                 return False
 
