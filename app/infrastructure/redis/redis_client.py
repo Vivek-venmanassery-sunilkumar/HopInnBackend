@@ -76,5 +76,9 @@ class RedisClient(RedisRepoInterface):
     async def store_blacklisted_token(self, token:str, expiry:int)->None:
         key = f"blacklist{token}"
         await self.client.setex(key, expiry, '1')
+    
+    async def rotate_tokens(self, user_id: str)->None:
+        access_token = self.token_repo.generate_access_token(user_id)
+        refresh_token = self.token_repo.generate_refresh_token(user_id)
 
  

@@ -1,7 +1,7 @@
 from app.api.schemas import OtpDataSchema, EmailSchema, LoginSchema, UserRegisterSchema, TokenRequestSchema
 from app.api.dependencies import UserRepoDep, EmailRepoDep, RedisRepoDep, TokenRepoDep
-from fastapi import APIRouter, HTTPException, status, Response
-from app.core.use_cases import SignUpUseCases, LoginUseCases, GoogleLoginUseCase
+from fastapi import APIRouter, HTTPException, status, Response, Request
+from app.core.use_cases import SignUpUseCases, LoginUseCases, GoogleLoginUseCase, TokenUseCases
 import logging
 
 logger = logging.getLogger(__name__)
@@ -208,3 +208,54 @@ async def google_login(
                 'message': 'Internal server error during Google authentication'
             }
         )
+
+
+@router.post('/refresh', status_code=status.HTTP_200_OK)
+async def refresh_token(
+    request: Request,
+    response: Response,
+    token_repo: TokenRepoDep, 
+    redis_repo: RedisRepoDep,
+):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"status": "error", "message": "Refresh token not found"}
+        )
+    
+    token_uc = TokenUseCases(token_repo, redis_repo)
+
+    try:
+        access_token, refresh_token = await token_uc.rotate_tokens(refresh_token)
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=False,
+            max_age=15*60,
+            samesite='lax',
+            path='/'
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=False,
+            max_age=30*24*60*60,
+            samesite='lax',
+            path='/'
+        )
+        return {"status": "success", "message": "Token refreshed successfully"}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"status": "error", "message": str(e)}
+        )
+    except Exception as e:
+        logger.info(f"Unexpected error in refresh token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"status": "error", "message": "Internal server error during token refresh"}
+        )
+    
