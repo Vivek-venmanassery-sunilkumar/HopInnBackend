@@ -9,4 +9,4 @@ from .kyc import KycEntity, KycListItemEntity
 from .guide.guide import GuideOnboardEntity
 from .host import HostOnboardEntity, PropertyAddressEntity, PropertyImageEntity, PropertyDetailsEntity, HostEntity, PropertyOnlyDetailsEntity, PropertyUpdateEntity, HostProfileUpdateEntity, PropertyDetailsWithTimestampsEntity
 from .user_management_entity import TravellerUserEntity, GuideUserEntity, HostUserEntity
-
+from .bookings import PropertyBookingsCheckEntity

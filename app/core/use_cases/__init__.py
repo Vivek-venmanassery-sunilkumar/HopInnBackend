@@ -9,3 +9,4 @@ from .onboarding_use_case import OnBoardingUseCase
 from .guide.profile import GuideProfileUseCase
 from .host.profile import HostProfileUseCase
 from .property import PropertyUseCase
+from .booking import PropertyBookingsUseCase

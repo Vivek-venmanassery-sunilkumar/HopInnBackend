@@ -9,3 +9,4 @@ from .host.host import HostOnboardSchema, PropertyImageSchema, PropertyAddressSc
 from .address import AddressSchema
 from .property import PropertySchema, PropertyUpdateSchema, PropertyDetailsResponseSchema
 from .admin.user_management_schema import TravellerUserSchema, GuideUserSchema, HostUserSchema, UserStatusUpdateRequestSchema, UserStatusUpdateResponseSchema
+from .booking import PropertyBookingsCheckSchema

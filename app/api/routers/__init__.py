@@ -9,3 +9,4 @@ from .host.profile import router as host_profile_router
 from .host.property import router as property_router
 from .admin.user_management import router as admin_router
 from .traveller.home_page import router as home_page_filter_router
+from .booking.booking_properties import router as booking_properties_router

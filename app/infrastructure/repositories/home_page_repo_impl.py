@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text, and_, or_, func
+from sqlalchemy import and_, func
 from sqlalchemy.future import select
 from geoalchemy2 import functions as geo_funcs
 from app.core.entities.traveller.home_page import PropertySearchEntity, PropertySearchQueryEntity, GuideSearchEntity, GuideSearchQueryEntity

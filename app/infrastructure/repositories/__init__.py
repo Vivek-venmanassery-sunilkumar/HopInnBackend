@@ -11,3 +11,4 @@ from .guide_profile_impl import GuideProfileImpl
 from .host_profile_impl import HostProfileImpl
 from .property_repo_impl import PropertyRepoImpl
 from .user_management_repo_impl import UserManagementRepoImpl
+from .booking_repo_impl import PropertyBookingsRepoImpl
