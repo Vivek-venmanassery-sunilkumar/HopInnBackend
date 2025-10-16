@@ -5,6 +5,7 @@ from alembic import context
 from app.infrastructure.database.session import Base
 from app.infrastructure.database.models.users.user import User, UserKyc
 from app.infrastructure.database.models.onboard import Guide, Languages, Host, Property, PropertyAddress, PropertyAmenities, PropertyImages
+from app.infrastructure.database.models.booking import PropertyBookings
 
 
 # this is the Alembic Config object, which provides

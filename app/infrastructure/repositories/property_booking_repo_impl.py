@@ -1,6 +1,6 @@
 from app.core.repositories.booking import PropertyBookingsRepo
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_
 from app.core.entities import PropertyBookingsCheckEntity
 from app.core.enums import BookingStatusEnum
 from app.infrastructure.database.models.booking import PropertyBookings
@@ -71,3 +71,23 @@ class PropertyBookingsRepoImpl(PropertyBookingsRepo):
             # Log the error (you might want to use a proper logger)
             logger.error(f"Error checking property bookings: {e}")
             return False
+    
+    async def calculate_property_booking_amount(self, property_bookings_data: PropertyBookingsCheckEntity)->float | None:
+        try:
+            # Fix: Add proper WHERE clause with Property.id == property_id
+            property_query = select(Property.price_per_night).where(Property.id == property_bookings_data.property_id)
+            property_result = await self.session.execute(property_query)
+            property_data = property_result.scalar_one_or_none()
+            
+            if property_data:
+                # Calculate number of nights
+                nights = (property_bookings_data.check_out_date - property_bookings_data.check_in_date).days
+                amount = property_data * nights
+                logger.info(f"Calculated amount: {property_data} per night * {nights} nights = {amount}")
+                return amount
+            else:
+                logger.warning(f"Property with ID {property_bookings_data.property_id} not found")
+                return None
+        except Exception as e:
+            logger.error(f"Error calculating property booking amount: {e}")
+            return None

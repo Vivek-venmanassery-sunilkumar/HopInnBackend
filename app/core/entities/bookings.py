@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator, Field
+from pydantic import BaseModel, field_validator, Field, computed_field
 from datetime import date
 
 
@@ -11,13 +11,13 @@ class PropertyBookingsCheckEntity(BaseModel):
     check_out_date: date = Field(alias='checkOutDate')
     total_guests: int = Field(default=0, alias='totalGuests')
 
-    @field_validator('total_guests', mode='before')
+
+    @field_validator('total_guests', mode='after')
     @classmethod
-    def calculate_total_guests(cls, v, values):
-        """Calculate total_guests as the sum of num_adults and num_children"""
-        if 'num_adults' in values and 'num_children' in values:
-            return values['num_adults'] + values['num_children']
-        return v
+    def calculate_total_guests(cls, v, info):
+        """Override any client-provided value"""
+        data = info.data
+        return data.get('num_adults', 0) + data.get('num_children', 0)
 
     @field_validator('num_adults', 'num_children', 'num_infants')
     @classmethod

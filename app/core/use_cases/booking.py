@@ -12,5 +12,9 @@ class PropertyBookingsUseCase:
     async def check_property_bookings(self, property_bookings_data: PropertyBookingsCheckSchema)->bool:
         property_bookings_data_entity = PropertyBookingsCheckEntity(**property_bookings_data.model_dump())
         return await self.property_bookings_repo.check_property_bookings(property_bookings_data_entity)
+    
+    async def calculate_property_booking_amount(self, property_bookings_data: PropertyBookingsCheckSchema)->float | None:
+        property_bookings_data_entity = PropertyBookingsCheckEntity(**property_bookings_data.model_dump())
+        return await self.property_bookings_repo.calculate_property_booking_amount(property_bookings_data_entity)
 
 

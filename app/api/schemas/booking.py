@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 from datetime import date
 
 class PropertyBookingsCheckSchema(BaseModel):
@@ -10,13 +10,11 @@ class PropertyBookingsCheckSchema(BaseModel):
     checkOutDate: date
     totalGuests: int = 0
 
-    @field_validator('totalGuests', mode='before')
-    @classmethod
-    def calculate_total_guests(cls, v, values):
+    @model_validator(mode='after')
+    def calculate_total_guests(self):
         """Calculate totalGuests as the sum of numAdults and numChildren"""
-        if 'numAdults' in values and 'numChildren' in values:
-            return values['numAdults'] + values['numChildren']
-        return v
+        self.totalGuests = self.numAdults + self.numChildren
+        return self
 
     @field_validator('numAdults', 'numChildren', 'numInfants')
     @classmethod
@@ -33,3 +31,12 @@ class PropertyBookingsCheckSchema(BaseModel):
         if v < 1:
             raise ValueError('At least one adult is required')
         return v
+
+class GuestsSchema(BaseModel):
+    numAdults: int
+    numChildren: int
+    numInfants: int
+    propertyId: int
+    checkInDate: date
+    checkOutDate: date
+    totalGuests: int

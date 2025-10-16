@@ -1,6 +1,6 @@
 from app.infrastructure.database.session import Base
 from sqlalchemy import Column, Integer, ForeignKey, Date, String, DateTime, func
-from app.core.enums import BookingStatusEnum, PaymentModeEnum
+from app.core.enums import BookingStatusEnum
 
 
 class PropertyBookings(Base):
@@ -15,8 +15,7 @@ class PropertyBookings(Base):
     total_guests=Column(Integer, nullable=False)
     check_in_date=Column(Date, nullable=False)
     check_out_date=Column(Date, nullable=False)
-    payment_mode=Column(String(255), nullable=False, default=PaymentModeEnum.ONLINE)
-    payment_id=Column(String(255), nullable=True)
-    booking_status=Column(String(255), nullable=False, default=BookingStatusEnum.CONFIRMED)
+    payment_id=Column(String(255), ForeignKey('payments.id', ondelete='CASCADE'), nullable=True)
+    booking_status=Column(String(255), nullable=False, default=BookingStatusEnum.PENDING)
     created_at=Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at=Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
