@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, func
+from sqlalchemy import and_, or_, func
 from sqlalchemy.future import select
 from geoalchemy2 import functions as geo_funcs
 from app.core.entities.traveller.home_page import PropertySearchEntity, PropertySearchQueryEntity, GuideSearchEntity, GuideSearchQueryEntity
@@ -290,9 +290,11 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
         query: GuideSearchQueryEntity
     ) -> List[GuideSearchEntity]:
         """
-        Search guides based on query parameters
+        Search guides based on query parameters with geographic sorting
         """
         try:
+            logger.info(f"Starting guide search with query: all={query.all}, destination={query.destination}")
+            
             # Build base query with user details and languages
             base_query = select(
                 Guide.id,
@@ -319,26 +321,57 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                 Guide.is_blocked == False  # Only get non-blocked guides
             )
             
-            # Apply filters only if not requesting all guides
+            # Apply filters and sorting
             if not query.all:
                 filters = []
+                
+                logger.info(f"Applying guide filters - destination: '{query.destination}', coordinates: ({query.latitude}, {query.longitude})")
                 
                 # Parse destination to extract location hierarchy (only if destination is provided)
                 if query.destination:
                     location_hierarchy = self.parse_destination_hierarchy(query.destination)
+                    logger.info(f"Parsed destination hierarchy: {location_hierarchy}")
                     
-                    # Filter by location hierarchy if available
+                    # Create OR conditions for multiple location fields to increase match chances
+                    location_filters = []
+                    
+                    # Search by city (district field often contains city names)
+                    if location_hierarchy.get('city'):
+                        location_filters.append(Guide.district.ilike(f"%{location_hierarchy['city']}%"))
+                        logger.info(f"Added city filter (district): {location_hierarchy['city']}")
+                    
+                    # Search by district
                     if location_hierarchy.get('district'):
-                        filters.append(Guide.district.ilike(f"%{location_hierarchy['district']}%"))
-                    elif location_hierarchy.get('state'):
-                        filters.append(Guide.state.ilike(f"%{location_hierarchy['state']}%"))
-                    elif location_hierarchy.get('country'):
-                        filters.append(Guide.country.ilike(f"%{location_hierarchy['country']}%"))
+                        location_filters.append(Guide.district.ilike(f"%{location_hierarchy['district']}%"))
+                        logger.info(f"Added district filter: {location_hierarchy['district']}")
+                    
+                    # Search by state
+                    if location_hierarchy.get('state'):
+                        location_filters.append(Guide.state.ilike(f"%{location_hierarchy['state']}%"))
+                        logger.info(f"Added state filter: {location_hierarchy['state']}")
+                    
+                    # Search by country
+                    if location_hierarchy.get('country'):
+                        location_filters.append(Guide.country.ilike(f"%{location_hierarchy['country']}%"))
+                        logger.info(f"Added country filter: {location_hierarchy['country']}")
+                    
+                    # Add OR condition for any location match
+                    if location_filters:
+                        filters.append(or_(*location_filters))
+                        logger.info(f"Added OR location filter with {len(location_filters)} conditions")
                 
                 # Apply geographic search if coordinates are provided
                 if query.latitude is not None and query.longitude is not None:
                     # Convert coordinates to geography point
                     search_point = self.convert_lat_lng_to_geography(query.latitude, query.longitude)
+                    logger.info(f"Search point: {search_point}")
+                    
+                    # Add distance calculation for sorting using proper column reference
+                    distance_calc = func.ST_Distance(
+                        Guide.location,
+                        func.ST_GeogFromText(search_point)
+                    )
+                    base_query = base_query.add_columns(distance_calc.label('distance'))
                     
                     # Add distance-based search (within 100km radius for better coverage)
                     distance_filter = func.ST_DWithin(
@@ -347,16 +380,48 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                         100000
                     )
                     filters.append(distance_filter)
+                    logger.info("Added geographic distance filter (100km radius)")
+                else:
+                    # If no coordinates, add a default distance of 0 for sorting
+                    base_query = base_query.add_columns(func.cast(0, func.Float).label('distance'))
                 
                 # Apply all filters
                 if filters:
                     base_query = base_query.filter(and_(*filters))
+                    logger.info(f"Applied {len(filters)} filters to guide search")
+                else:
+                    logger.info("No filters applied to guide search")
+                
+                # Apply sorting based on geographic proximity
+                if query.latitude is not None and query.longitude is not None:
+                    # Sort by distance ASC (closest first)
+                    base_query = base_query.order_by(distance_calc.asc())
+                    logger.info("Applied distance-based sorting")
+                else:
+                    # If no coordinates, sort by created_at DESC
+                    base_query = base_query.order_by(Guide.created_at.desc())
+                    logger.info("Applied created_at sorting")
+            else:
+                # For 'all' query, just sort by created_at
+                logger.info("Processing 'all' query for guides - no filters applied")
+                base_query = base_query.order_by(Guide.created_at.desc())
+            
+            # Debug: Let's check what guides exist in the database
+            debug_query = select(Guide.id, Guide.district, Guide.state, Guide.country, Guide.is_blocked).where(Guide.is_blocked == False)
+            debug_result = await self.db.execute(debug_query)
+            all_guides = debug_result.all()
+            logger.info(f"Total guides in database (not blocked): {len(all_guides)}")
+            for guide in all_guides:
+                logger.info(f"Guide {guide.id}: district='{guide.district}', state='{guide.state}', country='{guide.country}'")
             
             # Add pagination
             offset = (query.page - 1) * query.page_size
             paginated_query = base_query.offset(offset).limit(query.page_size)
+            logger.info(f"Executing guide query with pagination: offset={offset}, limit={query.page_size}")
+            
             db_result = await self.db.execute(paginated_query)
             guides = db_result.all()
+            logger.info(f"Query executed successfully, found {len(guides)} guides")
             
             # Convert to entities
             result = []
@@ -408,8 +473,8 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
         Get total count of guides matching search criteria
         """
         try:
-            # Build base query
-            base_query = select(Guide.id).join(
+            # Build base query with count
+            base_query = select(func.count(Guide.id)).join(
                 User, Guide.user_id == User.id
             ).where(
                 Guide.is_blocked == False  # Only count non-blocked guides
@@ -423,13 +488,28 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                 if query.destination:
                     location_hierarchy = self.parse_destination_hierarchy(query.destination)
                     
-                    # Filter by location hierarchy if available
+                    # Create OR conditions for multiple location fields to increase match chances
+                    location_filters = []
+                    
+                    # Search by city (district field often contains city names)
+                    if location_hierarchy.get('city'):
+                        location_filters.append(Guide.district.ilike(f"%{location_hierarchy['city']}%"))
+                    
+                    # Search by district
                     if location_hierarchy.get('district'):
-                        filters.append(Guide.district.ilike(f"%{location_hierarchy['district']}%"))
-                    elif location_hierarchy.get('state'):
-                        filters.append(Guide.state.ilike(f"%{location_hierarchy['state']}%"))
-                    elif location_hierarchy.get('country'):
-                        filters.append(Guide.country.ilike(f"%{location_hierarchy['country']}%"))
+                        location_filters.append(Guide.district.ilike(f"%{location_hierarchy['district']}%"))
+                    
+                    # Search by state
+                    if location_hierarchy.get('state'):
+                        location_filters.append(Guide.state.ilike(f"%{location_hierarchy['state']}%"))
+                    
+                    # Search by country
+                    if location_hierarchy.get('country'):
+                        location_filters.append(Guide.country.ilike(f"%{location_hierarchy['country']}%"))
+                    
+                    # Add OR condition for any location match
+                    if location_filters:
+                        filters.append(or_(*location_filters))
                 
                 # Apply geographic search if coordinates are provided
                 if query.latitude is not None and query.longitude is not None:
@@ -449,7 +529,7 @@ class HomePageRepositoryImpl(TravellerHomePageRepositoryInterface):
                     base_query = base_query.filter(and_(*filters))
             
             # Execute count query
-            count_result = await self.db.execute(select(func.count()).select_from(base_query.subquery()))
+            count_result = await self.db.execute(base_query)
             count = count_result.scalar()
             logger.info(f"Total guides matching search criteria: {count}")
             return count

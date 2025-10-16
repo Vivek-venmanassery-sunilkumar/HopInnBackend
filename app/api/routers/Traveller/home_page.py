@@ -57,14 +57,7 @@ async def search_properties(
         # Initialize use case with injected repository
         use_case = TravellerHomePageUseCase(home_page_repo)
         
-        # Validate query
-        if not use_case.validate_search_query(query_entity):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid search parameters"
-            )
-        
-        # Search properties
+        # Search properties (validation is handled in schema layer)
         result = await use_case.search_properties(query_entity)
         
         # Convert entities to response schema
@@ -155,14 +148,7 @@ async def search_guides(
         # Initialize use case with injected repository
         use_case = TravellerHomePageUseCase(home_page_repo)
         
-        # Validate query
-        if not use_case.validate_guide_search_query(query_entity):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid search parameters"
-            )
-        
-        # Search guides
+        # Search guides (validation is handled in schema layer)
         result = await use_case.search_guides(query_entity)
         
         # Convert entities to response schema

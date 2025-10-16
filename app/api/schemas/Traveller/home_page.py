@@ -121,11 +121,11 @@ class PropertySearchQueryParams(BaseModel):
 
     def model_post_init(self, __context) -> None:
         """Custom validation after model initialization"""
-        # If all=True, destination and guests are not required
+        # If all=True, no validation needed
         if self.all:
             return
         
-        # If all=False, destination and guests are required
+        # If all=False, validate required fields for property search
         if not self.destination or not self.destination.strip():
             raise ValueError("Destination is required when all=False")
         if self.guests is None or self.guests <= 0:
@@ -247,10 +247,13 @@ class GuideSearchQueryParams(BaseModel):
 
     def model_post_init(self, __context) -> None:
         """Custom validation after model initialization"""
-        # If all=True, destination is not required
+        # If all=True, no validation needed
         if self.all:
             return
         
-        # If all=False, destination is required
-        if not self.destination or not self.destination.strip():
-            raise ValueError("Destination is required when all=False")
+        # If all=False, validate that we have either destination OR coordinates
+        has_destination = self.destination and self.destination.strip()
+        has_coordinates = self.latitude is not None and self.longitude is not None
+        
+        if not has_destination and not has_coordinates:
+            raise ValueError("Either destination or coordinates must be provided when all=False")
